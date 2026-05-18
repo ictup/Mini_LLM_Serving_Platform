@@ -1,0 +1,96 @@
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    image: mini-llm-serving-platform:local
+    command: ["uvicorn", "gateway.app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+    environment:
+      APP_NAME: mini-llm-serving-platform
+      ENV: docker
+      LOG_LEVEL: INFO
+      API_KEYS: dev-key,team-a-key
+      RATE_LIMIT_ENABLED: "true"
+      RATE_LIMIT_RPM: "60"
+      REDIS_URL: redis://redis:6379/0
+      BACKEND_TYPE: mock
+      MOCK_BASE_URL: http://mock-backend:9000/v1
+      DEFAULT_MODEL: mock
+      MODEL_ALIASES_JSON: '{"mock":"mock","qwen-small":"mock"}'
+      METRICS_ENABLED: "true"
+    ports:
+      - "8080:8080"
+    depends_on:
+      mock-backend:
+        condition: service_started
+      redis:
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/ready', timeout=2)",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+
+  mock-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    image: mini-llm-serving-platform:local
+    command:
+      ["uvicorn", "serving.mock_backend.app:app", "--host", "0.0.0.0", "--port", "9000"]
+    ports:
+      - "9000:9000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9000/v1/models', timeout=2)",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      gateway:
+        condition: service_started
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      prometheus:
+        condition: service_started

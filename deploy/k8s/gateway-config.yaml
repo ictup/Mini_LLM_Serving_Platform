@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway-config
+  namespace: mini-llm-serving
+  labels:
+    app.kubernetes.io/name: gateway
+    app.kubernetes.io/part-of: mini-llm-serving-platform
+data:
+  APP_NAME: mini-llm-serving-platform
+  ENV: k8s
+  LOG_LEVEL: INFO
+  RATE_LIMIT_ENABLED: "true"
+  RATE_LIMIT_RPM: "60"
+  REDIS_URL: redis://redis:6379/0
+  BACKEND_TYPE: mock
+  MOCK_BASE_URL: http://mock-backend:9000/v1
+  DEFAULT_MODEL: mock
+  MODEL_ALIASES_JSON: '{"mock":"mock","qwen-small":"mock"}'
+  METRICS_ENABLED: "true"

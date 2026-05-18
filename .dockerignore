@@ -1,0 +1,12 @@
+.venv/
+.uv-cache/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+.env
+*.log
+
+benchmark/results/*
+!benchmark/results/.gitkeep

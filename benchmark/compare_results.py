@@ -1,0 +1,236 @@
+import argparse
+import json
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
+
+
+@dataclass(frozen=True)
+class BenchmarkRun:
+    path: Path
+    payload: dict[str, Any]
+
+
+@dataclass(frozen=True)
+class ComparisonRow:
+    concurrency: int
+    direct_summary: dict[str, Any]
+    gateway_summary: dict[str, Any]
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Compare direct backend and Gateway benchmarks.")
+    parser.add_argument("--direct-result", required=True)
+    parser.add_argument("--gateway-result", required=True)
+    parser.add_argument("--output", default="docs/gateway_overhead_report.md")
+    return parser.parse_args()
+
+
+def load_benchmark_run(path: Path) -> BenchmarkRun:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"benchmark result must be a JSON object: {path}")
+    if not isinstance(payload.get("summaries"), list):
+        raise ValueError(f"benchmark result missing summaries list: {path}")
+    return BenchmarkRun(path=path, payload=payload)
+
+
+def compare_runs(direct_run: BenchmarkRun, gateway_run: BenchmarkRun) -> list[ComparisonRow]:
+    direct_by_concurrency = summaries_by_concurrency(direct_run)
+    gateway_by_concurrency = summaries_by_concurrency(gateway_run)
+    common_concurrency = sorted(direct_by_concurrency.keys() & gateway_by_concurrency.keys())
+
+    if not common_concurrency:
+        raise ValueError("direct and Gateway benchmark results have no shared concurrency levels")
+
+    return [
+        ComparisonRow(
+            concurrency=concurrency,
+            direct_summary=direct_by_concurrency[concurrency],
+            gateway_summary=gateway_by_concurrency[concurrency],
+        )
+        for concurrency in common_concurrency
+    ]
+
+
+def summaries_by_concurrency(run: BenchmarkRun) -> dict[int, dict[str, Any]]:
+    summaries: dict[int, dict[str, Any]] = {}
+    for summary in run.payload["summaries"]:
+        if not isinstance(summary, dict):
+            continue
+        concurrency = summary.get("concurrency")
+        if isinstance(concurrency, int):
+            summaries[concurrency] = summary
+    return summaries
+
+
+def build_comparison_markdown(
+    direct_run: BenchmarkRun,
+    gateway_run: BenchmarkRun,
+    rows: list[ComparisonRow],
+    generated_at: str,
+) -> str:
+    lines = [
+        "# Gateway Overhead Report",
+        "",
+        f"Generated at: `{generated_at}`",
+        "",
+        "## Inputs",
+        "",
+        "| Path | Result File | Base URL | Model | Mode | Requests/Level |",
+        "| --- | --- | --- | --- | --- | ---: |",
+        run_row("direct backend", direct_run),
+        run_row("gateway", gateway_run),
+        "",
+        "## Direct Backend vs Gateway",
+        "",
+        "| Concurrency | Direct RPS | Gateway RPS | RPS Delta | Direct P50 Latency (ms) | "
+        "Gateway P50 Latency (ms) | P50 Overhead (ms) | Direct P95 Latency (ms) | "
+        "Gateway P95 Latency (ms) | P95 Overhead (ms) | Direct P50 TTFT (ms) | "
+        "Gateway P50 TTFT (ms) | TTFT Overhead (ms) | Error Delta |",
+        "| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | "
+        "---: | ---: | ---: | ---: |",
+    ]
+
+    for row in rows:
+        lines.append(comparison_row(row))
+
+    lines.extend(
+        [
+            "",
+            "## Metric Notes",
+            "",
+            "- Positive latency overhead means Gateway is slower than the direct backend path.",
+            "- Negative RPS delta means Gateway achieved lower throughput than direct backend.",
+            "- Compare runs only when prompts, stream mode, max tokens, and concurrency match.",
+            "- Output event counts are SSE chunks, not tokenizer-level output token counts.",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def run_row(label: str, run: BenchmarkRun) -> str:
+    payload = run.payload
+    return markdown_row(
+        [
+            label,
+            display_path(run.path),
+            str(payload.get("base_url", "n/a")),
+            str(payload.get("model", "n/a")),
+            format_mode(payload.get("stream")),
+            format_integer(payload.get("requests_per_level")),
+        ]
+    )
+
+
+def comparison_row(row: ComparisonRow) -> str:
+    direct = row.direct_summary
+    gateway = row.gateway_summary
+    return markdown_row(
+        [
+            str(row.concurrency),
+            format_float(direct.get("rps")),
+            format_float(gateway.get("rps")),
+            format_percent(delta_percent(gateway.get("rps"), direct.get("rps"))),
+            format_float(direct.get("p50_latency_ms")),
+            format_float(gateway.get("p50_latency_ms")),
+            format_float(delta(gateway.get("p50_latency_ms"), direct.get("p50_latency_ms"))),
+            format_float(direct.get("p95_latency_ms")),
+            format_float(gateway.get("p95_latency_ms")),
+            format_float(delta(gateway.get("p95_latency_ms"), direct.get("p95_latency_ms"))),
+            format_float(direct.get("p50_ttft_ms")),
+            format_float(gateway.get("p50_ttft_ms")),
+            format_float(delta(gateway.get("p50_ttft_ms"), direct.get("p50_ttft_ms"))),
+            format_percentage_points(delta(gateway.get("error_rate"), direct.get("error_rate"))),
+        ]
+    )
+
+
+def delta(left: Any, right: Any) -> float | None:
+    if isinstance(left, int | float) and isinstance(right, int | float):
+        return left - right
+    return None
+
+
+def delta_percent(value: Any, baseline: Any) -> float | None:
+    if not isinstance(value, int | float) or not isinstance(baseline, int | float):
+        return None
+    if baseline == 0:
+        return None
+    return (value - baseline) / baseline
+
+
+def markdown_row(cells: list[str]) -> str:
+    return "| " + " | ".join(cells) + " |"
+
+
+def display_path(path: Path) -> str:
+    try:
+        path = path.relative_to(Path.cwd())
+    except ValueError:
+        pass
+    return path.as_posix()
+
+
+def format_mode(stream: Any) -> str:
+    if stream is True:
+        return "streaming"
+    if stream is False:
+        return "non-streaming"
+    return "n/a"
+
+
+def format_integer(value: Any) -> str:
+    if isinstance(value, int):
+        return str(value)
+    return "n/a"
+
+
+def format_float(value: Any) -> str:
+    if isinstance(value, int | float):
+        return f"{value:.2f}"
+    return "n/a"
+
+
+def format_percent(value: Any) -> str:
+    if isinstance(value, int | float):
+        return f"{value * 100:.2f}%"
+    return "n/a"
+
+
+def format_percentage_points(value: Any) -> str:
+    if isinstance(value, int | float):
+        return f"{value * 100:.2f} pp"
+    return "n/a"
+
+
+def write_comparison_report(
+    direct_run: BenchmarkRun,
+    gateway_run: BenchmarkRun,
+    output_path: Path,
+) -> Path:
+    rows = compare_runs(direct_run, gateway_run)
+    generated_at = datetime.now(tz=UTC).isoformat(timespec="seconds")
+    report = build_comparison_markdown(
+        direct_run=direct_run,
+        gateway_run=gateway_run,
+        rows=rows,
+        generated_at=generated_at,
+    )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(report, encoding="utf-8")
+    print(f"wrote_report={output_path}")
+    return output_path
+
+
+def main() -> None:
+    args = parse_args()
+    direct_run = load_benchmark_run(Path(args.direct_result))
+    gateway_run = load_benchmark_run(Path(args.gateway_result))
+    write_comparison_report(direct_run, gateway_run, Path(args.output))
+
+
+if __name__ == "__main__":
+    main()

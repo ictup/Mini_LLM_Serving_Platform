@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: Gateway Dashboards
+    orgId: 1
+    folder: Mini LLM Serving
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards

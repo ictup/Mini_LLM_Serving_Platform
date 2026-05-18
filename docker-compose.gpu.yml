@@ -1,0 +1,49 @@
+services:
+  gateway:
+    environment:
+      BACKEND_TYPE: vllm
+      VLLM_BASE_URL: http://vllm:8000/v1
+      VLLM_API_KEY: ${VLLM_API_KEY:-local-vllm-key}
+      DEFAULT_MODEL: qwen-small
+      MODEL_ALIASES_JSON: '{"qwen-small":"${VLLM_MODEL:-Qwen/Qwen2.5-1.5B-Instruct}"}'
+    depends_on:
+      vllm:
+        condition: service_started
+      redis:
+        condition: service_started
+
+  vllm:
+    image: vllm/vllm-openai:${VLLM_IMAGE_TAG:-latest}
+    ipc: host
+    environment:
+      HUGGING_FACE_HUB_TOKEN: ${HUGGING_FACE_HUB_TOKEN:-}
+    command:
+      - --model
+      - ${VLLM_MODEL:-Qwen/Qwen2.5-1.5B-Instruct}
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --api-key
+      - ${VLLM_API_KEY:-local-vllm-key}
+      - --dtype
+      - ${VLLM_DTYPE:-auto}
+      - --disable-log-requests
+    ports:
+      - "8000:8000"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: ["gpu"]
+
+  prometheus:
+    volumes:
+      - ./monitoring/prometheus/prometheus.gpu.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      gateway:
+        condition: service_started
+      vllm:
+        condition: service_started

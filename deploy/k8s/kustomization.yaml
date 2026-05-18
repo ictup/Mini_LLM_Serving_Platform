@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+  - gateway-config.yaml
+  - gateway-secret.yaml
+  - gateway-deployment.yaml
+  - gateway-service.yaml
+  - mock-backend-deployment.yaml
+  - mock-backend-service.yaml
+  - redis-deployment.yaml
+  - redis-service.yaml
+  - prometheus-config.yaml
+  - prometheus-deployment.yaml
+  - prometheus-service.yaml
