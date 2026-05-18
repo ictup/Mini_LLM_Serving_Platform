@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vllm-config
+  namespace: mini-llm-serving
+  labels:
+    app.kubernetes.io/name: vllm
+    app.kubernetes.io/part-of: mini-llm-serving-platform
+data:
+  VLLM_MODEL: Qwen/Qwen2.5-1.5B-Instruct
+  VLLM_DTYPE: auto

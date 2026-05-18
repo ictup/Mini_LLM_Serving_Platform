@@ -1,4 +1,4 @@
-.PHONY: dev mock smoke benchmark benchmark-report benchmark-compare test lint format docker-up docker-down docker-gpu-up docker-gpu-down k8s-apply k8s-delete
+.PHONY: dev mock smoke benchmark benchmark-report benchmark-compare test lint format docker-up docker-down docker-gpu-up docker-gpu-down k8s-apply k8s-delete k8s-gpu-apply k8s-gpu-delete
 
 dev:
 	uv run uvicorn gateway.app.main:app --reload --host 0.0.0.0 --port 8080
@@ -55,3 +55,9 @@ k8s-apply:
 
 k8s-delete:
 	kubectl delete -k deploy/k8s
+
+k8s-gpu-apply:
+	kubectl apply -k deploy/k8s-gpu
+
+k8s-gpu-delete:
+	kubectl delete -k deploy/k8s-gpu

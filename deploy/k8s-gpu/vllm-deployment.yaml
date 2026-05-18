@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm
+  namespace: mini-llm-serving
+  labels:
+    app.kubernetes.io/name: vllm
+    app.kubernetes.io/part-of: mini-llm-serving-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vllm
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vllm
+        app.kubernetes.io/part-of: mini-llm-serving-platform
+    spec:
+      containers:
+        - name: vllm
+          image: vllm/vllm-openai:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - --model
+            - $(VLLM_MODEL)
+            - --host
+            - 0.0.0.0
+            - --port
+            - "8000"
+            - --api-key
+            - $(VLLM_API_KEY)
+            - --dtype
+            - $(VLLM_DTYPE)
+            - --disable-log-requests
+          envFrom:
+            - configMapRef:
+                name: vllm-config
+            - secretRef:
+                name: vllm-secret
+          ports:
+            - name: http
+              containerPort: 8000
+          resources:
+            limits:
+              nvidia.com/gpu: "1"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 6
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30

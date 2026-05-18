@@ -133,3 +133,19 @@ Remove the stack:
 ```bash
 kubectl delete -k deploy/k8s
 ```
+
+## Kubernetes GPU overlay
+
+The GPU overlay in `deploy/k8s-gpu` reuses the no-GPU base and adds vLLM. It
+patches Gateway to use `BACKEND_TYPE=vllm`, routes `qwen-small` to
+`Qwen/Qwen2.5-1.5B-Instruct`, and patches Prometheus to scrape `vllm:8000`.
+
+```bash
+kubectl apply -k deploy/k8s-gpu
+kubectl -n mini-llm-serving port-forward svc/gateway 8080:8080
+kubectl -n mini-llm-serving port-forward svc/vllm 8000:8000
+```
+
+The vLLM deployment requests one NVIDIA GPU with `nvidia.com/gpu: "1"`. Replace
+the example `local-vllm-key` and optional Hugging Face token Secret values
+before using this outside local experiments.
