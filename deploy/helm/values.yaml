@@ -1,0 +1,47 @@
+namespace:
+  create: true
+  name: mini-llm-serving
+
+gateway:
+  replicas: 1
+  image: mini-llm-serving-platform:local
+  imagePullPolicy: IfNotPresent
+  apiKeys: dev-key,team-a-key
+  logLevel: INFO
+  rateLimit:
+    enabled: true
+    rpm: 60
+  service:
+    port: 8080
+  modelAliasesJson: '{"mock":"mock","qwen-small":"mock"}'
+
+mockBackend:
+  enabled: true
+  image: mini-llm-serving-platform:local
+  imagePullPolicy: IfNotPresent
+  service:
+    port: 9000
+
+redis:
+  enabled: true
+  image: redis:7-alpine
+  service:
+    port: 6379
+
+prometheus:
+  enabled: true
+  image: prom/prometheus:v2.55.1
+  scrapeInterval: 5s
+  service:
+    port: 9090
+
+vllm:
+  enabled: false
+  image: vllm/vllm-openai:latest
+  model: Qwen/Qwen2.5-1.5B-Instruct
+  apiKey: local-vllm-key
+  dtype: auto
+  huggingFaceHubToken: ""
+  gpu: 1
+  service:
+    port: 8000

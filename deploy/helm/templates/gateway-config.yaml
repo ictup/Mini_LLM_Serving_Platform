@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway-config
+  namespace: {{ .Values.namespace.name }}
+  labels:
+{{ include "mini-llm.componentLabels" (dict "name" "gateway") | indent 4 }}
+data:
+  APP_NAME: mini-llm-serving-platform
+  ENV: helm
+  LOG_LEVEL: {{ .Values.gateway.logLevel | quote }}
+  RATE_LIMIT_ENABLED: {{ .Values.gateway.rateLimit.enabled | quote }}
+  RATE_LIMIT_RPM: {{ .Values.gateway.rateLimit.rpm | quote }}
+  REDIS_URL: redis://redis:{{ .Values.redis.service.port }}/0
+  METRICS_ENABLED: "true"
+  {{- if .Values.vllm.enabled }}
+  BACKEND_TYPE: vllm
+  VLLM_BASE_URL: http://vllm:{{ .Values.vllm.service.port }}/v1
+  DEFAULT_MODEL: qwen-small
+  MODEL_ALIASES_JSON: {{ printf "{\"qwen-small\":\"%s\"}" .Values.vllm.model | quote }}
+  {{- else }}
+  BACKEND_TYPE: mock
+  MOCK_BASE_URL: http://mock-backend:{{ .Values.mockBackend.service.port }}/v1
+  DEFAULT_MODEL: mock
+  MODEL_ALIASES_JSON: {{ .Values.gateway.modelAliasesJson | quote }}
+  {{- end }}

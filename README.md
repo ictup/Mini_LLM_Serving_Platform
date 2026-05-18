@@ -149,3 +149,26 @@ kubectl -n mini-llm-serving port-forward svc/vllm 8000:8000
 The vLLM deployment requests one NVIDIA GPU with `nvidia.com/gpu: "1"`. Replace
 the example `local-vllm-key` and optional Hugging Face token Secret values
 before using this outside local experiments.
+
+## Helm chart
+
+The minimal Helm chart lives in `deploy/helm`. By default it deploys the same
+no-GPU stack as `deploy/k8s`: Gateway, mock backend, Redis, and Prometheus.
+
+```bash
+helm template mini-llm deploy/helm --namespace mini-llm-serving
+helm upgrade --install mini-llm deploy/helm --namespace mini-llm-serving --create-namespace
+```
+
+Enable vLLM with values:
+
+```bash
+helm template mini-llm deploy/helm \
+  --namespace mini-llm-serving \
+  --set vllm.enabled=true \
+  --set mockBackend.enabled=false
+```
+
+The chart is intentionally small. Use it as a deployment skeleton before adding
+production concerns such as ingress, persistent storage, ServiceMonitor CRDs,
+autoscaling, or secret management integration.

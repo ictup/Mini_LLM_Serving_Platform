@@ -1,0 +1,6 @@
+apiVersion: v2
+name: mini-llm-serving-platform
+description: OpenAI-compatible LLM serving gateway with mock and optional vLLM backends.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

@@ -1,4 +1,4 @@
-.PHONY: dev mock smoke benchmark benchmark-report benchmark-compare test lint format docker-up docker-down docker-gpu-up docker-gpu-down k8s-apply k8s-delete k8s-gpu-apply k8s-gpu-delete
+.PHONY: dev mock smoke benchmark benchmark-report benchmark-compare test lint format docker-up docker-down docker-gpu-up docker-gpu-down k8s-apply k8s-delete k8s-gpu-apply k8s-gpu-delete helm-template helm-template-gpu helm-install helm-uninstall
 
 dev:
 	uv run uvicorn gateway.app.main:app --reload --host 0.0.0.0 --port 8080
@@ -61,3 +61,15 @@ k8s-gpu-apply:
 
 k8s-gpu-delete:
 	kubectl delete -k deploy/k8s-gpu
+
+helm-template:
+	helm template mini-llm deploy/helm --namespace mini-llm-serving
+
+helm-template-gpu:
+	helm template mini-llm deploy/helm --namespace mini-llm-serving --set vllm.enabled=true --set mockBackend.enabled=false
+
+helm-install:
+	helm upgrade --install mini-llm deploy/helm --namespace mini-llm-serving --create-namespace
+
+helm-uninstall:
+	helm uninstall mini-llm --namespace mini-llm-serving
