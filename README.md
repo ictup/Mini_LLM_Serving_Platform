@@ -237,6 +237,7 @@ requests per level after the local GPU path is stable. See
 | Kubernetes GPU overlay | `deploy/k8s-gpu` | Adds vLLM and vLLM metrics scraping |
 | Helm | `deploy/helm` | Parameterized deployment skeleton |
 | GitOps / Argo CD | `deploy/gitops` | Continuous sync of the Helm release |
+| Terraform IaC | `deploy/terraform` | Namespace, Secrets boundary, and Argo CD Application |
 
 Validate manifests:
 
@@ -264,6 +265,7 @@ helm template mini-llm deploy/helm \
 | `deploy/k8s-gpu` | vLLM Kubernetes overlay |
 | `deploy/helm` | Helm chart for mock and vLLM modes |
 | `deploy/gitops` | Argo CD Applications for mock and vLLM modes |
+| `deploy/terraform` | Terraform root module for GitOps cluster entry points |
 | `docs` | API, configuration, design decisions, operations, reports |
 
 ## Documentation
@@ -274,6 +276,7 @@ helm template mini-llm deploy/helm \
 - [Failure analysis](docs/failure_analysis.md)
 - [Production hardening notes](docs/production_hardening.md)
 - [GitOps deployment guide](docs/gitops_deployment.md)
+- [Terraform IaC guide](deploy/terraform/README.md)
 - [Gateway overhead report](docs/gateway_overhead_report.md)
 - [Performance benchmarking guide](docs/performance_benchmarking.md)
 - [Project status and acceptance checklist](docs/project_status.md)

@@ -10,6 +10,7 @@ manual `helm upgrade --install` commands.
 | `.github/workflows/container.yml` | Builds `Dockerfile.gateway` and publishes the Gateway/mock image to GHCR. |
 | `deploy/gitops/argocd-application-mock.yaml` | Argo CD Application for the no-GPU mock backend stack. |
 | `deploy/gitops/argocd-application-vllm.yaml` | Argo CD Application for the vLLM GPU stack. |
+| `deploy/terraform` | Optional Terraform root module for managing the Argo CD Application and namespace. |
 | `deploy/helm` | Shared chart used by both Applications. |
 
 ## Flow
@@ -34,6 +35,9 @@ The GitOps manifests reference pre-existing Kubernetes Secrets:
 Create those Secrets manually for a lab cluster or through External Secrets in a
 shared environment. The example External Secrets manifest lives at
 `deploy/k8s/examples/external-secrets.yaml`.
+
+Terraform users can manage the namespace and Argo CD Application from
+`deploy/terraform` while still keeping real secret values outside Git.
 
 ## Mock Stack
 
@@ -81,6 +85,8 @@ curl http://localhost:9090/api/v1/rules
 
 - Replace the GHCR image with your registry if the package is private or moved.
 - Pin immutable image tags for release environments instead of tracking `main`.
+- Use `deploy/terraform` when cluster entry points should be managed by IaC
+  instead of one-off `kubectl apply` commands.
 - Keep Argo CD automated prune/self-heal enabled only for namespaces where this
   repository is the source of truth.
 - Use External Secrets or a managed secret provider for shared clusters.

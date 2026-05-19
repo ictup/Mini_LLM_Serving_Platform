@@ -12,3 +12,10 @@ htmlcov/
 
 benchmark/results/*
 !benchmark/results/.gitkeep
+
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log

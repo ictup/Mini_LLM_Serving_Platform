@@ -216,6 +216,18 @@ important production path:
 - Runtime Secrets are referenced as existing cluster objects.
 - The mock and vLLM stacks are represented as separate sync targets.
 
+## Why Keep Terraform at the Cluster Entry Point?
+
+Terraform is useful for owning long-lived environment objects, but full cluster
+provisioning is provider-specific. The project therefore includes a small
+Terraform root module that manages the common boundary: namespace, optional
+lab-only Secrets, and the Argo CD Application that points at the Helm chart.
+
+This shows the IaC shape without pretending that EKS, AKS, GKE, and local
+clusters share the same bootstrap code. It also keeps real production secrets
+out of Git by default and documents the state-file risk when placeholder
+Secrets are enabled.
+
 ## Why vLLM Instead of SGLang or TGI for the MVP?
 
 vLLM is a practical primary backend for this project because it is widely used,

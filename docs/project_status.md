@@ -7,7 +7,8 @@ scope from intentionally excluded external integrations.
 
 The project is a reproducible LLM serving platform with an OpenAI-compatible
 Gateway, mock backend, vLLM GPU path, observability, benchmarking tools, Docker
-Compose, Kubernetes manifests, Helm templates, GitOps examples, and CI.
+Compose, Kubernetes manifests, Helm templates, GitOps examples, Terraform IaC
+skeleton, and CI.
 
 The vLLM path has been validated locally on an RTX 4060 Laptop GPU using
 `Qwen/Qwen2.5-0.5B-Instruct` with `vllm/vllm-openai:v0.8.5.post1`. The larger
@@ -46,6 +47,7 @@ with more available GPU memory.
 | Kubernetes vLLM GPU overlay | Implemented, template-validated | `deploy/k8s-gpu` |
 | Helm chart | Done | `deploy/helm`, `helm lint`, `helm template` |
 | Argo CD GitOps examples | Done | `deploy/gitops` |
+| Terraform IaC skeleton | Done | `deploy/terraform` |
 | GitHub Actions CI | Done | `.github/workflows/ci.yml` |
 | Container image publishing workflow | Done | `.github/workflows/container.yml` |
 | Design decisions documentation | Done | `docs/design_decisions.md` |
@@ -125,11 +127,12 @@ uv run python benchmark/client_smoke_test.py
 - Token accounting supports model-aware profiles and optional local
   `tokenizer.json` files. Exact production parity still depends on providing
   the same tokenizer artifact as the served model.
-- Kubernetes, Helm, and GitOps assets include basic ingress, TLS, HPA, external
-  Secret, vLLM startup, and Prometheus alert rule examples. They still do not
-  include ServiceMonitor CRDs, Alertmanager receiver routing, cluster-specific
-  GPU autoscaling, organization-specific secret stores, persistent cluster
-  storage, or cross-backend GPU-aware routing.
+- Kubernetes, Helm, GitOps, and Terraform assets include basic ingress, TLS,
+  HPA, external Secret, vLLM startup, and Prometheus alert rule examples. They
+  still do not include cloud-cluster provisioning, ServiceMonitor CRDs,
+  Alertmanager receiver routing, cluster-specific GPU autoscaling,
+  organization-specific secret stores, persistent cluster storage, or
+  cross-backend GPU-aware routing.
 - Secrets in example manifests are local placeholders and must be replaced
   before any shared or public deployment.
 - Grafana dashboards are provisioned for local experimentation. Long-term
@@ -154,6 +157,7 @@ uv run python benchmark/client_smoke_test.py
 | `docs/failure_analysis.md` | Troubleshooting guide for common failures |
 | `docs/production_hardening.md` | Ingress/TLS, secrets, autoscaling, vLLM readiness, alerting, Grafana persistence |
 | `docs/gitops_deployment.md` | Argo CD Applications, GHCR image workflow, and GitOps validation |
+| `deploy/terraform/README.md` | Terraform root module for namespace, Secret boundary, and Argo CD Application |
 | `docs/gateway_overhead_report.md` | Local direct-vLLM vs Gateway benchmark comparison |
 | `docs/performance_benchmarking.md` | Benchmark profiles, portfolio run commands, and metric interpretation |
 | `docs/portfolio_summary.md` | Final project pitch, demo script, and CV bullets |

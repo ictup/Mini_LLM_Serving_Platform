@@ -1,0 +1,23 @@
+# Copy this file to terraform.tfvars for local experiments.
+# Do not commit terraform.tfvars; it can contain secrets.
+
+kube_context = "docker-desktop"
+
+# false deploys the mock backend stack. true deploys the vLLM GPU stack.
+deploy_vllm = false
+
+gateway_image = "ghcr.io/ictup/mini-llm-serving-platform:main"
+
+# Prefer External Secrets or pre-created Secrets in shared clusters.
+create_placeholder_secrets = false
+
+# Only used when create_placeholder_secrets=true.
+gateway_api_keys = ["replace-me"]
+vllm_api_key     = "replace-me"
+
+# vLLM GPU mode defaults match the locally validated Docker GPU path.
+vllm_model                  = "Qwen/Qwen2.5-0.5B-Instruct"
+vllm_image                  = "vllm/vllm-openai:v0.8.5.post1"
+vllm_gpu_count              = 1
+vllm_max_model_len          = 4096
+vllm_gpu_memory_utilization = 0.75

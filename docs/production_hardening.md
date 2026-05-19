@@ -175,6 +175,22 @@ kubectl apply -f deploy/gitops/argocd-application-vllm.yaml
 
 See `docs/gitops_deployment.md` for the full workflow and production notes.
 
+## Terraform IaC Skeleton
+
+`deploy/terraform` provides a small root module for teams that want the GitOps
+entry point managed by Terraform. It creates the serving namespace, can create
+placeholder Secrets for disposable labs, and manages an Argo CD `Application`
+that syncs `deploy/helm`.
+
+The module deliberately starts after cluster creation. It assumes a kubeconfig
+and an existing Argo CD installation, because EKS, AKS, GKE, and local clusters
+need different bootstrap code.
+
+For shared environments, leave `create_placeholder_secrets=false` and create
+`gateway-secret` / `vllm-secret` through External Secrets, Vault, or a managed
+secret provider. If placeholder Secrets are enabled, those values are written to
+Terraform state and must be treated as sensitive.
+
 ## Final Production Checklist
 
 - Replace all placeholder API keys and tokens.
@@ -187,4 +203,5 @@ See `docs/gitops_deployment.md` for the full workflow and production notes.
 - Confirm Prometheus alert rules are loaded and route notifications through the
   environment's Alertmanager or managed alerting service.
 - Validate the Argo CD Application sync path if the cluster is GitOps-managed.
+- Validate the Terraform plan if cluster entry points are managed through IaC.
 - Generate a direct-vs-Gateway benchmark report from real GPU runs.
