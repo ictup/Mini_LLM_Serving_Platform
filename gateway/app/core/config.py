@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     api_keys: str = "dev-key,team-a-key"
     rate_limit_enabled: bool = False
     rate_limit_rpm: int = Field(default=60, gt=0)
+    rate_limit_tpm: int = Field(default=60_000, gt=0)
+    rate_limit_default_completion_tokens: int = Field(default=256, gt=0)
     redis_url: str = "redis://localhost:6379/0"
 
     gateway_host: str = "0.0.0.0"

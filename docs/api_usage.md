@@ -260,6 +260,10 @@ Unknown model aliases return `400`:
 Backend failures are normalized into the same OpenAI-style error envelope with
 the backend-derived status code and error code.
 
+Rate limits return `429`. Request-per-minute limits use
+`code=rate_limit_exceeded`; estimated token-per-minute limits use
+`code=token_rate_limit_exceeded`.
+
 ## Metrics
 
 Prometheus metrics are available at:

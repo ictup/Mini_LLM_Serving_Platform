@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
 from gateway.app.core.config import Settings, get_settings
-from gateway.app.core.rate_limit import enforce_rate_limit
+from gateway.app.core.rate_limit import enforce_chat_rate_limit
 from gateway.app.core.request_id import get_request_id
 from gateway.app.core.security import require_api_key
 from gateway.app.observability.metrics import observe_streaming_chunks
@@ -18,7 +18,6 @@ router = APIRouter(prefix="/v1", tags=["chat"])
 logger = structlog.get_logger("gateway.chat")
 SettingsDependency = Annotated[Settings, Depends(get_settings)]
 APIKeyDependency = Annotated[str, Depends(require_api_key)]
-RateLimitDependency = Annotated[None, Depends(enforce_rate_limit)]
 
 
 @router.post("/chat/completions", response_model=None)
@@ -26,10 +25,11 @@ async def create_chat_completion(
     raw_request: Request,
     request: ChatCompletionRequest,
     settings: SettingsDependency,
-    _api_key: APIKeyDependency,
-    _rate_limit: RateLimitDependency,
+    api_key: APIKeyDependency,
 ) -> dict | JSONResponse | StreamingResponse:
     request_id = get_request_id(raw_request)
+    await enforce_chat_rate_limit(settings=settings, api_key=api_key, request=request)
+
     try:
         backend_model = resolve_model_alias(request.model, settings)
     except ModelAliasError as exc:

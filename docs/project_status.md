@@ -26,7 +26,7 @@ presented as fully benchmarked.
 | Mock backend | Done | `serving/mock_backend/app.py` |
 | API key authentication | Done | `gateway/app/core/security.py` |
 | Request IDs | Done | `gateway/app/core/request_id.py` |
-| Redis RPM rate limiting | Done | `gateway/app/core/rate_limit.py` |
+| Redis RPM and TPM rate limiting | Done | `gateway/app/core/rate_limit.py` |
 | Structured logging | Done | `gateway/app/core/logging.py` |
 | Prometheus metrics | Done | `gateway/app/observability/metrics.py` |
 | Grafana dashboards | Done | `monitoring/grafana/dashboards/*` |
@@ -106,8 +106,9 @@ Use this checklist on a CUDA-capable host:
   substitute for real model latency, tokenization, or GPU scheduling behavior.
 - vLLM deployment files are implemented but not verified in this workspace on
   actual GPU hardware.
-- Rate limiting is request-per-minute only. Token-per-minute limiting is not
-  implemented.
+- Rate limiting uses an estimated token count instead of a model-specific
+  tokenizer. This keeps the Gateway backend-neutral, but real token accounting
+  may differ by model.
 - Kubernetes and Helm assets are intentionally minimal. They do not include
   ingress, TLS, HPA, ServiceMonitor CRDs, persistent volumes, external secrets,
   or multi-model routing.
@@ -120,7 +121,7 @@ Use this checklist on a CUDA-capable host:
 
 ## Production Hardening Backlog
 
-- Add token-per-minute and concurrent-request rate limiting.
+- Add concurrent-request rate limiting.
 - Add request body size limits and stricter validation for operational safety.
 - Add ingress/TLS examples and a deployment-specific secret management strategy.
 - Add HPA or queue-aware autoscaling recommendations.

@@ -12,6 +12,8 @@ services:
       API_KEYS: dev-key,team-a-key
       RATE_LIMIT_ENABLED: "true"
       RATE_LIMIT_RPM: "60"
+      RATE_LIMIT_TPM: "60000"
+      RATE_LIMIT_DEFAULT_COMPLETION_TOKENS: "256"
       REDIS_URL: redis://redis:6379/0
       BACKEND_TYPE: mock
       MOCK_BASE_URL: http://mock-backend:9000/v1

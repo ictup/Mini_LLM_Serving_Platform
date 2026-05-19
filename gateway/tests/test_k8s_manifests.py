@@ -49,6 +49,8 @@ def test_gateway_k8s_config_points_to_cluster_services() -> None:
     manifest = read_manifest("gateway-config.yaml")
 
     assert "REDIS_URL: redis://redis:6379/0" in manifest
+    assert 'RATE_LIMIT_TPM: "60000"' in manifest
+    assert 'RATE_LIMIT_DEFAULT_COMPLETION_TOKENS: "256"' in manifest
     assert "MOCK_BASE_URL: http://mock-backend:9000/v1" in manifest
     assert "BACKEND_TYPE: mock" in manifest
     assert """MODEL_ALIASES_JSON: '{"mock":"mock","qwen-small":"mock"}'""" in manifest

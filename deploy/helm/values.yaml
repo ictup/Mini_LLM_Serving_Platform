@@ -11,6 +11,8 @@ gateway:
   rateLimit:
     enabled: true
     rpm: 60
+    tpm: 60000
+    defaultCompletionTokens: 256
   service:
     port: 8080
   modelAliasesJson: '{"mock":"mock","qwen-small":"mock"}'

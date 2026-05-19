@@ -20,6 +20,8 @@ def test_helm_chart_has_expected_metadata_and_values() -> None:
     assert "name: mini-llm-serving-platform" in chart
     assert "type: application" in chart
     assert "gateway:" in values
+    assert "tpm: 60000" in values
+    assert "defaultCompletionTokens: 256" in values
     assert "mockBackend:" in values
     assert "redis:" in values
     assert "prometheus:" in values
@@ -39,6 +41,8 @@ def test_helm_gateway_template_preserves_health_and_ready_probes() -> None:
     assert "name: gateway-secret" in deployment
     assert "BACKEND_TYPE: mock" in config
     assert "BACKEND_TYPE: vllm" in config
+    assert "RATE_LIMIT_TPM:" in config
+    assert "RATE_LIMIT_DEFAULT_COMPLETION_TOKENS:" in config
     assert "VLLM_BASE_URL: http://vllm:" in config
     assert "API_KEYS:" in secret
     assert "VLLM_API_KEY:" in secret

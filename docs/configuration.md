@@ -24,8 +24,10 @@ Helm deployments.
 | `ENV` | No | `local` | Environment label such as `local`, `docker`, or `k8s`. |
 | `LOG_LEVEL` | No | `INFO` | Gateway log level. |
 | `API_KEYS` | Yes | `dev-key,team-a-key` | Comma-separated client Bearer tokens accepted by the Gateway. |
-| `RATE_LIMIT_ENABLED` | No | `false` in code, enabled in deploy files | Enables Redis-backed per-key RPM limiting. |
+| `RATE_LIMIT_ENABLED` | No | `false` in code, enabled in deploy files | Enables Redis-backed per-key RPM and TPM limiting. |
 | `RATE_LIMIT_RPM` | No | `60` | Requests per minute allowed for each API key. |
+| `RATE_LIMIT_TPM` | No | `60000` | Estimated tokens per minute allowed for each API key. |
+| `RATE_LIMIT_DEFAULT_COMPLETION_TOKENS` | No | `256` | Output-token budget reserved when a request omits `max_tokens`. |
 | `REDIS_URL` | When rate limiting is enabled | `redis://localhost:6379/0` | Redis connection URL used by the rate limiter. |
 | `BACKEND_TYPE` | No | `mock` | Selects `mock` or `vllm` backend routing. |
 | `MOCK_BASE_URL` | In mock mode | `http://localhost:9000/v1` | OpenAI-compatible mock backend base URL. |
