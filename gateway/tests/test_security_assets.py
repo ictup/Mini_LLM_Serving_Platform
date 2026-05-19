@@ -18,6 +18,7 @@ def test_security_workflow_runs_dependency_audit_and_trivy_scans() -> None:
     assert "aquasecurity/trivy-action@0.28.0" in workflow
     assert "scanners: vuln,secret,misconfig" in workflow
     assert "github/codeql-action/upload-sarif@v3" in workflow
+    assert "continue-on-error: true" in workflow
     assert "docker/build-push-action@v6" in workflow
     assert "format: cyclonedx" in workflow
     assert "actions/upload-artifact@v4" in workflow
@@ -30,8 +31,10 @@ def test_security_workflow_scans_repository_and_container_image() -> None:
     assert "scan-type: fs" in workflow
     assert "scan-ref: ." in workflow
     assert "output: trivy-repository.sarif" in workflow
+    assert "name: trivy-repository-sarif" in workflow
     assert "image-ref: mini-llm-serving-platform:security-scan" in workflow
     assert "output: trivy-image.sarif" in workflow
+    assert "name: trivy-image-sarif" in workflow
     assert "severity: HIGH,CRITICAL" in workflow
     assert 'exit-code: "0"' in workflow
 
@@ -62,5 +65,6 @@ def test_security_documentation_covers_local_and_production_workflows() -> None:
     assert "trivy image" in doc
     assert "trivy fs" in doc
     assert "CycloneDX SBOM" in doc
-    assert "SARIF" in doc
+    assert "SARIF artifacts" in doc
+    assert "best-effort upload to GitHub code scanning" in doc
     assert "Terraform placeholder Secrets" in doc
