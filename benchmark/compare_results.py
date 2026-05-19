@@ -106,6 +106,10 @@ def build_comparison_markdown(
             "",
             "- Positive latency overhead means Gateway is slower than the direct backend path.",
             "- Negative RPS delta means Gateway achieved lower throughput than direct backend.",
+            "- Negative latency overhead can happen in local sequential runs due to run-to-run "
+            "variance, warmup state, output length variance, and vLLM scheduling. It should be "
+            "interpreted as no obvious Gateway bottleneck, not as proof that Gateway accelerates "
+            "the backend.",
             "- Compare runs only when prompts, stream mode, max tokens, and concurrency match.",
             "- Output event counts are SSE chunks, not tokenizer-level output token counts.",
             "",

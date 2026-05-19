@@ -78,16 +78,22 @@ Full details are in
 
 ## Benchmark Snapshot
 
-Small local streaming benchmark, useful for demonstrating the measurement
-pipeline rather than production capacity planning:
+Portfolio profile on a local RTX 4060 Laptop GPU, using 100 measured streaming
+requests per concurrency level:
 
 | Concurrency | Direct RPS | Gateway RPS | Direct P95 Latency | Gateway P95 Latency | Gateway P50 TTFT |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | 2.25 | 2.25 | 585.91 ms | 587.33 ms | 52.14 ms |
-| 2 | 3.92 | 3.81 | 625.46 ms | 605.28 ms | 49.24 ms |
+| 1 | 1.15 | 1.47 | 1630.03 ms | 1242.91 ms | 46.38 ms |
+| 4 | 3.77 | 4.71 | 1973.45 ms | 1524.16 ms | 61.33 ms |
+| 8 | 6.32 | 7.75 | 2222.24 ms | 1798.30 ms | 70.76 ms |
+| 16 | 8.82 | 11.34 | 3022.67 ms | 2469.14 ms | 79.86 ms |
+| 32 | 11.09 | 14.53 | 4901.53 ms | 3960.98 ms | 205.41 ms |
 
 The report generator compares direct backend calls against Gateway-routed calls
 using the same prompt set, concurrency levels, stream mode, and token limits.
+Both paths completed with zero errors. The Gateway-faster rows should be read
+as local run variance and no obvious Gateway bottleneck, not as proof that the
+Gateway accelerates vLLM.
 
 ## Quick Start: No GPU
 
