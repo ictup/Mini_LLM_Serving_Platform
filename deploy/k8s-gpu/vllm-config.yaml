@@ -7,5 +7,9 @@ metadata:
     app.kubernetes.io/name: vllm
     app.kubernetes.io/part-of: mini-llm-serving-platform
 data:
-  VLLM_MODEL: Qwen/Qwen2.5-1.5B-Instruct
-  VLLM_DTYPE: auto
+  VLLM_MODEL: Qwen/Qwen2.5-0.5B-Instruct
+  VLLM_DTYPE: float16
+  VLLM_MAX_MODEL_LEN: "4096"
+  VLLM_GPU_MEMORY_UTILIZATION: "0.75"
+  VLLM_SWAP_SPACE: "1"
+  VLLM_USE_V1: "0"

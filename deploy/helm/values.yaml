@@ -66,11 +66,15 @@ prometheus:
 
 vllm:
   enabled: false
-  image: vllm/vllm-openai:latest
-  model: Qwen/Qwen2.5-1.5B-Instruct
+  image: vllm/vllm-openai:v0.8.5.post1
+  model: Qwen/Qwen2.5-0.5B-Instruct
   apiKey: local-vllm-key
   existingSecretName: ""
-  dtype: auto
+  dtype: float16
+  maxModelLen: 4096
+  gpuMemoryUtilization: 0.75
+  swapSpace: 1
+  useV1: "0"
   huggingFaceHubToken: ""
   gpu: 1
   startupProbe:

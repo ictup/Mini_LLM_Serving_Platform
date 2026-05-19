@@ -52,9 +52,13 @@ These values configure the vLLM server itself. They are consumed by
 
 | Variable | Required | Default | Description |
 | --- | --- | --- | --- |
-| `VLLM_MODEL` | Yes | `Qwen/Qwen2.5-1.5B-Instruct` | Hugging Face model id served by vLLM. |
-| `VLLM_IMAGE_TAG` | No | `latest` | Docker tag for `vllm/vllm-openai` in Compose GPU mode. |
-| `VLLM_DTYPE` | No | `auto` | vLLM dtype argument. |
+| `VLLM_MODEL` | Yes | `Qwen/Qwen2.5-0.5B-Instruct` | Hugging Face model id served by vLLM. The default is validated on an 8GB RTX 4060 Laptop GPU. |
+| `VLLM_IMAGE_TAG` | No | `v0.8.5.post1` | Docker tag for `vllm/vllm-openai` in Compose GPU mode. |
+| `VLLM_DTYPE` | No | `float16` | vLLM dtype argument. |
+| `VLLM_MAX_MODEL_LEN` | No | `4096` | Maximum model context length. |
+| `VLLM_GPU_MEMORY_UTILIZATION` | No | `0.75` | Fraction of GPU memory vLLM can target. |
+| `VLLM_SWAP_SPACE` | No | `1` | vLLM CPU swap space in GiB. |
+| `VLLM_USE_V1` | No | `0` | vLLM engine switch. `0` uses the v0 engine for local Docker compatibility. |
 | `VLLM_API_KEY` | Yes | `local-vllm-key` | API key enforced by vLLM and used by the Gateway. |
 | `HUGGING_FACE_HUB_TOKEN` | For gated models | empty | Token required to download gated Hugging Face models. |
 
@@ -75,9 +79,9 @@ Example for vLLM mode:
 
 ```env
 BACKEND_TYPE=vllm
-VLLM_MODEL=Qwen/Qwen2.5-1.5B-Instruct
+VLLM_MODEL=Qwen/Qwen2.5-0.5B-Instruct
 DEFAULT_MODEL=qwen-small
-MODEL_ALIASES_JSON={"qwen-small":"Qwen/Qwen2.5-1.5B-Instruct"}
+MODEL_ALIASES_JSON={"qwen-small":"Qwen/Qwen2.5-0.5B-Instruct"}
 ```
 
 This keeps client code stable while allowing the served backend model to change.

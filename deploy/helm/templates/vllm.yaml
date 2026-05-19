@@ -9,6 +9,10 @@ metadata:
 data:
   VLLM_MODEL: {{ .Values.vllm.model | quote }}
   VLLM_DTYPE: {{ .Values.vllm.dtype | quote }}
+  VLLM_MAX_MODEL_LEN: {{ .Values.vllm.maxModelLen | quote }}
+  VLLM_GPU_MEMORY_UTILIZATION: {{ .Values.vllm.gpuMemoryUtilization | quote }}
+  VLLM_SWAP_SPACE: {{ .Values.vllm.swapSpace | quote }}
+  VLLM_USE_V1: {{ .Values.vllm.useV1 | quote }}
 {{- if not .Values.vllm.existingSecretName }}
 ---
 apiVersion: v1
@@ -56,6 +60,13 @@ spec:
             - $(VLLM_API_KEY)
             - --dtype
             - $(VLLM_DTYPE)
+            - --max-model-len
+            - $(VLLM_MAX_MODEL_LEN)
+            - --gpu-memory-utilization
+            - $(VLLM_GPU_MEMORY_UTILIZATION)
+            - --swap-space
+            - $(VLLM_SWAP_SPACE)
+            - --disable-frontend-multiprocessing
             - --disable-log-requests
           envFrom:
             - configMapRef:

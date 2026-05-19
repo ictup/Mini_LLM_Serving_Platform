@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: vllm
-          image: vllm/vllm-openai:latest
+          image: vllm/vllm-openai:v0.8.5.post1
           imagePullPolicy: IfNotPresent
           args:
             - --model
@@ -32,6 +32,13 @@ spec:
             - $(VLLM_API_KEY)
             - --dtype
             - $(VLLM_DTYPE)
+            - --max-model-len
+            - $(VLLM_MAX_MODEL_LEN)
+            - --gpu-memory-utilization
+            - $(VLLM_GPU_MEMORY_UTILIZATION)
+            - --swap-space
+            - $(VLLM_SWAP_SPACE)
+            - --disable-frontend-multiprocessing
             - --disable-log-requests
           envFrom:
             - configMapRef:

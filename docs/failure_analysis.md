@@ -174,7 +174,7 @@ Fixes:
 - Set `MODEL_ALIASES_JSON` to a valid JSON object, for example:
 
 ```env
-MODEL_ALIASES_JSON={"qwen-small":"Qwen/Qwen2.5-1.5B-Instruct"}
+MODEL_ALIASES_JSON={"qwen-small":"Qwen/Qwen2.5-0.5B-Instruct"}
 ```
 
 ## Rate Limit False Positive

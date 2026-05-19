@@ -5,7 +5,7 @@ services:
       VLLM_BASE_URL: http://vllm:8000/v1
       VLLM_API_KEY: ${VLLM_API_KEY:-local-vllm-key}
       DEFAULT_MODEL: qwen-small
-      MODEL_ALIASES_JSON: '{"qwen-small":"${VLLM_MODEL:-Qwen/Qwen2.5-1.5B-Instruct}"}'
+      MODEL_ALIASES_JSON: '{"qwen-small":"${VLLM_MODEL:-Qwen/Qwen2.5-0.5B-Instruct}"}'
     depends_on:
       vllm:
         condition: service_healthy
@@ -13,13 +13,14 @@ services:
         condition: service_started
 
   vllm:
-    image: vllm/vllm-openai:${VLLM_IMAGE_TAG:-latest}
+    image: vllm/vllm-openai:${VLLM_IMAGE_TAG:-v0.8.5.post1}
     ipc: host
     environment:
       HUGGING_FACE_HUB_TOKEN: ${HUGGING_FACE_HUB_TOKEN:-}
+      VLLM_USE_V1: ${VLLM_USE_V1:-0}
     command:
       - --model
-      - ${VLLM_MODEL:-Qwen/Qwen2.5-1.5B-Instruct}
+      - ${VLLM_MODEL:-Qwen/Qwen2.5-0.5B-Instruct}
       - --host
       - 0.0.0.0
       - --port
@@ -27,7 +28,14 @@ services:
       - --api-key
       - ${VLLM_API_KEY:-local-vllm-key}
       - --dtype
-      - ${VLLM_DTYPE:-auto}
+      - ${VLLM_DTYPE:-float16}
+      - --max-model-len
+      - ${VLLM_MAX_MODEL_LEN:-4096}
+      - --gpu-memory-utilization
+      - ${VLLM_GPU_MEMORY_UTILIZATION:-0.75}
+      - --swap-space
+      - ${VLLM_SWAP_SPACE:-1}
+      - --disable-frontend-multiprocessing
       - --disable-log-requests
     ports:
       - "8000:8000"
@@ -35,7 +43,7 @@ services:
       test:
         [
           "CMD",
-          "python",
+          "python3",
           "-c",
           "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)",
         ]

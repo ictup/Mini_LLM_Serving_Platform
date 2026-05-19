@@ -7,4 +7,4 @@ data:
   BACKEND_TYPE: vllm
   VLLM_BASE_URL: http://vllm:8000/v1
   DEFAULT_MODEL: qwen-small
-  MODEL_ALIASES_JSON: '{"qwen-small":"Qwen/Qwen2.5-1.5B-Instruct"}'
+  MODEL_ALIASES_JSON: '{"qwen-small":"Qwen/Qwen2.5-0.5B-Instruct"}'

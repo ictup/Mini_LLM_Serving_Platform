@@ -1,19 +1,18 @@
 # Project Status and Acceptance Checklist
 
-This document is the current project checkpoint. It separates the implemented
-MVP from the work that still requires a GPU environment, external systems, or
-production infrastructure decisions.
+This document is the current project checkpoint. It separates completed project
+scope from intentionally excluded external integrations.
 
 ## Current Status
 
-The project is a reproducible no-GPU LLM serving platform with an
-OpenAI-compatible Gateway, mock backend, observability, benchmarking tools,
-Docker Compose, Kubernetes manifests, Helm templates, and CI.
+The project is a reproducible LLM serving platform with an OpenAI-compatible
+Gateway, mock backend, vLLM GPU path, observability, benchmarking tools, Docker
+Compose, Kubernetes manifests, Helm templates, and CI.
 
-The vLLM path is implemented as configuration, Docker Compose override,
-Kubernetes overlay, Helm values, metrics scraping, and benchmark commands. It
-still needs validation on a real CUDA-capable machine before it should be
-presented as fully benchmarked.
+The vLLM path has been validated locally on an RTX 4060 Laptop GPU using
+`Qwen/Qwen2.5-0.5B-Instruct` with `vllm/vllm-openai:v0.8.5.post1`. The larger
+`Qwen/Qwen2.5-1.5B-Instruct` model remains a configurable option for machines
+with more available GPU memory.
 
 ## Acceptance Checklist
 
@@ -37,20 +36,22 @@ presented as fully benchmarked.
 | Benchmark report generator | Done | `benchmark/generate_report.py` |
 | Direct-vs-Gateway comparison tool | Done | `benchmark/compare_results.py` |
 | Docker no-GPU stack | Done | `docker-compose.yml` |
-| Docker vLLM GPU override | Implemented, needs GPU validation | `docker-compose.gpu.yml` |
+| Docker vLLM GPU override | Done, locally validated | `docker-compose.gpu.yml`, `scripts/warmup_gateway.py` |
 | Kubernetes no-GPU manifests | Done | `deploy/k8s` |
-| Kubernetes vLLM GPU overlay | Implemented, needs GPU cluster validation | `deploy/k8s-gpu` |
+| Kubernetes vLLM GPU overlay | Implemented, template-validated | `deploy/k8s-gpu` |
 | Helm chart | Done | `deploy/helm`, `helm lint`, `helm template` |
 | GitHub Actions CI | Done | `.github/workflows/ci.yml` |
 | Design decisions documentation | Done | `docs/design_decisions.md` |
 | Failure analysis documentation | Done | `docs/failure_analysis.md` |
 | RAG smoke test and integration guide | Done | `benchmark/rag_integration_smoke_test.py`, `docs/rag_integration.md` |
-| External RAG application integration | Not implemented | Needs an external RAG app path/config |
+| External RAG application integration | Excluded from this completion | Requires a separate external RAG app path/config |
 | Production ingress/TLS | Implemented as examples | `deploy/k8s/gateway-ingress.yaml`, Helm ingress values |
 | Autoscaling | Implemented as examples | `deploy/k8s/gateway-hpa.yaml`, Helm autoscaling values |
 | Secret management strategy | Implemented as examples | Helm `existingSecretName`, `deploy/k8s/examples/external-secrets.yaml` |
 | vLLM startup and warmup handling | Implemented as examples | vLLM startup probes, `scripts/warmup_gateway.py` |
 | Persistent dashboards/storage | Implemented for local stack | Docker `grafana-data` volume, dashboard JSON workflow |
+| Local GPU benchmark report | Done | `docs/gateway_overhead_report.md` |
+| Portfolio summary and demo script | Done | `docs/portfolio_summary.md` |
 
 ## Validation Commands
 
@@ -91,25 +92,29 @@ docker compose down
 
 ## GPU/vLLM Validation Checklist
 
-Use this checklist on a CUDA-capable host:
+Validated locally on Windows + Docker Desktop + RTX 4060 Laptop GPU:
 
-- Confirm Docker can access the GPU with `nvidia-smi` inside a CUDA container.
-- Set `VLLM_MODEL`, `VLLM_API_KEY`, and `HUGGING_FACE_HUB_TOKEN` if needed.
-- Start the GPU stack with `docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build`.
-- Confirm vLLM responds at `http://localhost:8000/v1/models`.
-- Confirm Gateway readiness returns `backend_type=vllm`.
-- Run `benchmark/client_smoke_test.py` with `LLM_MODEL=qwen-small`.
-- Run direct vLLM and Gateway benchmark commands from the README.
-- Generate the direct-vs-Gateway overhead report.
-- Check Prometheus targets for both `gateway` and `vllm`.
-- Check Grafana `Gateway Overview` and `vLLM Engine Overview` dashboards.
+- `VLLM_IMAGE_TAG=v0.8.5.post1`
+- `VLLM_MODEL=Qwen/Qwen2.5-0.5B-Instruct`
+- Gateway warmup succeeded with `qwen-small`.
+- OpenAI SDK non-streaming and streaming smoke test succeeded.
+- Direct vLLM and Gateway streaming benchmarks completed with zero errors.
+- Direct-vs-Gateway report generated at `docs/gateway_overhead_report.md`.
+
+For another CUDA-capable host, repeat:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build
+uv run python scripts/warmup_gateway.py --model qwen-small
+uv run python benchmark/client_smoke_test.py
+```
 
 ## Known Limitations
 
 - The mock backend is deterministic enough for platform testing, but it is not a
   substitute for real model latency, tokenization, or GPU scheduling behavior.
-- vLLM deployment files are implemented but not verified in this workspace on
-  actual GPU hardware.
+- vLLM has been locally verified with the 0.5B model. Larger models depend on
+  available GPU memory and driver/container compatibility.
 - Rate limiting uses an estimated token count instead of a model-specific
   tokenizer. This keeps the Gateway backend-neutral, but real token accounting
   may differ by model.
@@ -122,13 +127,13 @@ Use this checklist on a CUDA-capable host:
 - Grafana dashboards are provisioned for local experimentation. Long-term
   dashboard persistence is not configured.
 - A project-local RAG smoke test is implemented. A specific external RAG
-  application has not been wired to this Gateway yet.
+  application is intentionally excluded from this completion.
 
-## Remaining External Validation Work
+## Excluded Scope
 
-- Connect an external RAG application to this Gateway when its path/config is
-  available.
-- Add real GPU benchmark results and a finalized gateway overhead report.
+- External RAG application integration. The serving platform exposes the
+  OpenAI-compatible endpoint needed for that integration, but wiring a separate
+  RAG codebase requires that project's path, configuration, and startup command.
 
 ## Documentation Map
 
@@ -140,6 +145,8 @@ Use this checklist on a CUDA-capable host:
 | `docs/design_decisions.md` | Architecture choices and tradeoffs |
 | `docs/failure_analysis.md` | Troubleshooting guide for common failures |
 | `docs/production_hardening.md` | Ingress/TLS, secrets, autoscaling, vLLM readiness, Grafana persistence |
+| `docs/gateway_overhead_report.md` | Local direct-vLLM vs Gateway benchmark comparison |
+| `docs/portfolio_summary.md` | Final project pitch, demo script, and CV bullets |
 | `docs/rag_integration.md` | RAG client integration pattern and smoke test |
 | `docs/benchmark_report.md` | Benchmark report template/output |
-| `docs/project_status.md` | Acceptance checklist, limitations, and next work |
+| `docs/project_status.md` | Acceptance checklist, limitations, and excluded scope |

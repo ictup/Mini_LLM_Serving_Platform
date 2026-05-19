@@ -37,7 +37,7 @@ def test_helm_chart_has_expected_metadata_and_values() -> None:
     assert "prometheus:" in values
     assert "vllm:" in values
     assert "enabled: false" in values
-    assert "Qwen/Qwen2.5-1.5B-Instruct" in values
+    assert "Qwen/Qwen2.5-0.5B-Instruct" in values
 
 
 def test_helm_gateway_template_preserves_health_and_ready_probes() -> None:
@@ -76,6 +76,7 @@ def test_helm_chart_templates_optional_vllm_backend() -> None:
     assert "nvidia.com/gpu: {{ .Values.vllm.gpu | quote }}" in vllm
     assert "startupProbe:" in vllm
     assert "mini-llm.vllmSecretName" in vllm
+    assert "--disable-frontend-multiprocessing" in vllm
     assert "job_name: vllm" in prometheus
     assert "vllm:{{ .Values.vllm.service.port }}" in prometheus
 

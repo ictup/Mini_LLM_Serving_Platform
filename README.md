@@ -52,9 +52,11 @@ docker compose up --build
 - GitHub Actions CI for Python checks and Helm chart validation.
 
 Direct vLLM benchmark comparison is available through the benchmark scripts.
+The current local GPU comparison is documented in
+`docs/gateway_overhead_report.md`.
 
 See `docs/project_status.md` for the acceptance checklist, validation commands,
-known limitations, and remaining production hardening work.
+known limitations, and intentionally excluded scope.
 
 ## Continuous integration
 
@@ -86,8 +88,10 @@ streaming usage, error responses, and health check behavior.
 - `docs/design_decisions.md`: explains the main architecture choices.
 - `docs/failure_analysis.md`: lists common failures and debugging steps.
 - `docs/production_hardening.md`: covers ingress/TLS, secret management, autoscaling, vLLM readiness, and Grafana persistence.
+- `docs/gateway_overhead_report.md`: summarizes the local direct-vLLM vs Gateway benchmark.
+- `docs/portfolio_summary.md`: provides the final project pitch, demo flow, and CV bullets.
 - `docs/rag_integration.md`: shows how a RAG app can call the Gateway.
-- `docs/project_status.md`: tracks completed capabilities, limitations, and remaining work.
+- `docs/project_status.md`: tracks completed capabilities, limitations, and excluded scope.
 
 ## Local end-to-end smoke test
 
@@ -149,13 +153,23 @@ docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build
 
 Important environment variables:
 
-- `VLLM_MODEL`: model served by vLLM, default `Qwen/Qwen2.5-1.5B-Instruct`
+- `VLLM_MODEL`: model served by vLLM, default `Qwen/Qwen2.5-0.5B-Instruct`
+- `VLLM_IMAGE_TAG`: vLLM Docker image tag, default `v0.8.5.post1`
 - `VLLM_API_KEY`: internal Gateway-to-vLLM API key, default `local-vllm-key`
 - `HUGGING_FACE_HUB_TOKEN`: required only for gated Hugging Face models
-- `VLLM_DTYPE`: vLLM dtype setting, default `auto`
+- `VLLM_DTYPE`: vLLM dtype setting, default `float16`
+- `VLLM_MAX_MODEL_LEN`: maximum model context length, default `4096`
+- `VLLM_GPU_MEMORY_UTILIZATION`: vLLM GPU memory target, default `0.75`
+- `VLLM_SWAP_SPACE`: vLLM CPU swap space in GiB, default `1`
+- `VLLM_USE_V1`: vLLM engine switch, default `0` for local Docker compatibility
 
 In GPU mode, Gateway uses `BACKEND_TYPE=vllm` and routes the client-facing
 `qwen-small` alias to `VLLM_MODEL`.
+
+The repository defaults to `Qwen/Qwen2.5-0.5B-Instruct` because it has been
+validated on an 8GB RTX 4060 Laptop GPU. Larger models such as
+`Qwen/Qwen2.5-1.5B-Instruct` can be selected by overriding `VLLM_MODEL` on
+machines with enough free GPU memory.
 
 GPU mode also switches Prometheus to `monitoring/prometheus/prometheus.gpu.yml`,
 which scrapes both Gateway and vLLM. Grafana automatically loads a separate
@@ -170,10 +184,11 @@ Run the same prompt set against vLLM directly and through the Gateway:
 uv run python benchmark/run_benchmark.py \
   --base-url http://localhost:8000/v1 \
   --api-key local-vllm-key \
-  --model Qwen/Qwen2.5-1.5B-Instruct \
+  --model Qwen/Qwen2.5-0.5B-Instruct \
   --prompts benchmark/prompts/short_prompts.jsonl \
-  --concurrency 1 2 4 \
-  --requests-per-level 10 \
+  --concurrency 1 2 \
+  --requests-per-level 5 \
+  --max-tokens 64 \
   --stream true
 
 uv run python benchmark/run_benchmark.py \
@@ -181,8 +196,9 @@ uv run python benchmark/run_benchmark.py \
   --api-key dev-key \
   --model qwen-small \
   --prompts benchmark/prompts/short_prompts.jsonl \
-  --concurrency 1 2 4 \
-  --requests-per-level 10 \
+  --concurrency 1 2 \
+  --requests-per-level 5 \
+  --max-tokens 64 \
   --stream true
 ```
 
@@ -218,7 +234,7 @@ kubectl delete -k deploy/k8s
 
 The GPU overlay in `deploy/k8s-gpu` reuses the no-GPU base and adds vLLM. It
 patches Gateway to use `BACKEND_TYPE=vllm`, routes `qwen-small` to
-`Qwen/Qwen2.5-1.5B-Instruct`, and patches Prometheus to scrape `vllm:8000`.
+`Qwen/Qwen2.5-0.5B-Instruct`, and patches Prometheus to scrape `vllm:8000`.
 
 ```bash
 kubectl apply -k deploy/k8s-gpu

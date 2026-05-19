@@ -126,7 +126,7 @@ def test_gpu_gateway_patch_switches_gateway_to_vllm() -> None:
     assert "BACKEND_TYPE: vllm" in manifest
     assert "VLLM_BASE_URL: http://vllm:8000/v1" in manifest
     assert "DEFAULT_MODEL: qwen-small" in manifest
-    assert """MODEL_ALIASES_JSON: '{"qwen-small":"Qwen/Qwen2.5-1.5B-Instruct"}'""" in manifest
+    assert """MODEL_ALIASES_JSON: '{"qwen-small":"Qwen/Qwen2.5-0.5B-Instruct"}'""" in manifest
     assert "VLLM_API_KEY: local-vllm-key" in secret
 
 
@@ -134,12 +134,13 @@ def test_vllm_k8s_manifest_requests_gpu_and_exposes_service() -> None:
     deployment = read_gpu_manifest("vllm-deployment.yaml")
     service = read_gpu_manifest("vllm-service.yaml")
 
-    assert "image: vllm/vllm-openai:latest" in deployment
+    assert "image: vllm/vllm-openai:v0.8.5.post1" in deployment
     assert "nvidia.com/gpu: \"1\"" in deployment
     assert "- --model" in deployment
     assert "- $(VLLM_MODEL)" in deployment
     assert "- --api-key" in deployment
     assert "- $(VLLM_API_KEY)" in deployment
+    assert "--disable-frontend-multiprocessing" in deployment
     assert "path: /health" in deployment
     assert "startupProbe:" in deployment
     assert "failureThreshold: 60" in deployment
