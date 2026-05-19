@@ -14,27 +14,28 @@ def test_security_workflow_runs_dependency_audit_and_trivy_scans() -> None:
     assert "pull_request:" in workflow
     assert "schedule:" in workflow
     assert "uv run --with pip-audit pip-audit --strict" in workflow
-    assert "aquasecurity/trivy-action@v0.28.0" in workflow
-    assert "scanners: vuln,secret,misconfig" in workflow
+    assert 'TRIVY_VERSION: "0.58.1"' in workflow
+    assert "trivy --version" in workflow
+    assert "--scanners vuln,secret,misconfig" in workflow
     assert "docker/build-push-action@v6" in workflow
-    assert "format: cyclonedx" in workflow
+    assert "--format cyclonedx" in workflow
     assert "actions/upload-artifact@v4" in workflow
     assert "sbom-cyclonedx.json" in workflow
     assert "github/codeql-action/upload-sarif" not in workflow
+    assert "aquasecurity/trivy-action" not in workflow
 
 
 def test_security_workflow_scans_repository_and_container_image() -> None:
     workflow = SECURITY_WORKFLOW_PATH.read_text(encoding="utf-8")
 
-    assert "scan-type: fs" in workflow
-    assert "scan-ref: ." in workflow
-    assert "output: trivy-repository.sarif" in workflow
+    assert "trivy fs" in workflow
+    assert "trivy image" in workflow
+    assert "--output trivy-repository.sarif" in workflow
     assert "name: trivy-repository-sarif" in workflow
-    assert "image-ref: mini-llm-serving-platform:security-scan" in workflow
-    assert "output: trivy-image.sarif" in workflow
+    assert "--output trivy-image.sarif" in workflow
     assert "name: trivy-image-sarif" in workflow
-    assert "severity: HIGH,CRITICAL" in workflow
-    assert 'exit-code: "0"' in workflow
+    assert "--severity HIGH,CRITICAL" in workflow
+    assert "--exit-code 0" in workflow
 
 
 def test_container_workflow_publishes_attestations() -> None:
