@@ -208,6 +208,20 @@ steps into hard gates once severity thresholds and remediation SLAs are agreed.
 
 See `docs/security.md` for local commands and production notes.
 
+## Release Engineering
+
+Release tags use `vMAJOR.MINOR.PATCH` and must match the `version` field in
+`pyproject.toml`. The release workflow validates that contract before creating a
+GitHub Release. The container image workflow publishes matching GHCR tags and
+Buildx SBOM/provenance attestations.
+
+Before cutting a release, update `CHANGELOG.md`, run the quality gate, validate
+the intended tag with `scripts/check_release_version.py`, and push the tag.
+Production GitOps values should use immutable release tags or image digests
+rather than the moving `main` tag.
+
+See `docs/release_process.md` for the full checklist.
+
 ## Final Production Checklist
 
 - Replace all placeholder API keys and tokens.
@@ -222,4 +236,5 @@ See `docs/security.md` for local commands and production notes.
 - Validate the Argo CD Application sync path if the cluster is GitOps-managed.
 - Validate the Terraform plan if cluster entry points are managed through IaC.
 - Review security workflow findings and SBOM artifacts before tagging a release.
+- Confirm release tag, changelog, GitHub Release, and GHCR image tag agree.
 - Generate a direct-vs-Gateway benchmark report from real GPU runs.

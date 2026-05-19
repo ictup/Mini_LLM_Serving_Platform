@@ -38,6 +38,8 @@ without claiming to be a full enterprise GPU scheduler.
 - GitOps examples for Argo CD, backed by a GHCR container image workflow.
 - Supply-chain security checks with dependency audit, Trivy scans, SBOM output,
   provenance attestations, and Dependabot update PRs.
+- Release engineering with SemVer tag validation, generated GitHub Releases,
+  versioned GHCR image tags, and changelog guidance.
 - CI coverage for Python checks, tests, Helm lint, and Helm rendering.
 
 ## Architecture
@@ -280,6 +282,7 @@ helm template mini-llm deploy/helm \
 - [GitOps deployment guide](docs/gitops_deployment.md)
 - [Terraform IaC guide](deploy/terraform/README.md)
 - [Security and supply chain](docs/security.md)
+- [Release process](docs/release_process.md)
 - [Gateway overhead report](docs/gateway_overhead_report.md)
 - [Performance benchmarking guide](docs/performance_benchmarking.md)
 - [Project status and acceptance checklist](docs/project_status.md)

@@ -241,6 +241,18 @@ initial Trivy gates are report-first because base-image CVEs can appear without
 code changes; production teams can tighten those gates once they define
 severity thresholds and remediation windows.
 
+## Why Validate Release Tags?
+
+The repository publishes source releases and GHCR images from Git tags. If the
+tag, changelog, and project metadata drift apart, downstream GitOps values can
+point to an image that is hard to trace back to source. The release workflow
+therefore validates that `vMAJOR.MINOR.PATCH` tags match the `pyproject.toml`
+version before creating a GitHub Release.
+
+The container workflow already publishes tag-based image tags, `sha-*` tags, and
+the moving `main` tag. The release guide recommends immutable version tags or
+digests for production GitOps values.
+
 ## Why vLLM Instead of SGLang or TGI for the MVP?
 
 vLLM is a practical primary backend for this project because it is widely used,

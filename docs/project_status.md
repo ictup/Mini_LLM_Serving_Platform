@@ -8,7 +8,7 @@ scope from intentionally excluded external integrations.
 The project is a reproducible LLM serving platform with an OpenAI-compatible
 Gateway, mock backend, vLLM GPU path, observability, benchmarking tools, Docker
 Compose, Kubernetes manifests, Helm templates, GitOps examples, Terraform IaC
-skeleton, supply-chain security checks, and CI.
+skeleton, supply-chain security checks, release automation, and CI.
 
 The vLLM path has been validated locally on an RTX 4060 Laptop GPU using
 `Qwen/Qwen2.5-0.5B-Instruct` with `vllm/vllm-openai:v0.8.5.post1`. The larger
@@ -52,6 +52,8 @@ with more available GPU memory.
 | Container image publishing workflow | Done | `.github/workflows/container.yml` |
 | Supply-chain security workflow | Done | `.github/workflows/security.yml` |
 | Dependabot update policy | Done | `.github/dependabot.yml` |
+| Release automation | Done | `.github/workflows/release.yml`, `scripts/check_release_version.py` |
+| Changelog and release guide | Done | `CHANGELOG.md`, `docs/release_process.md` |
 | Design decisions documentation | Done | `docs/design_decisions.md` |
 | Failure analysis documentation | Done | `docs/failure_analysis.md` |
 | RAG smoke test and integration guide | Done | `benchmark/rag_integration_smoke_test.py`, `docs/rag_integration.md` |
@@ -161,6 +163,7 @@ uv run python benchmark/client_smoke_test.py
 | `docs/gitops_deployment.md` | Argo CD Applications, GHCR image workflow, and GitOps validation |
 | `deploy/terraform/README.md` | Terraform root module for namespace, Secret boundary, and Argo CD Application |
 | `docs/security.md` | Dependency audit, Trivy scans, SBOM, and supply-chain notes |
+| `docs/release_process.md` | Versioning, release tag, GitHub Release, and GHCR image process |
 | `docs/gateway_overhead_report.md` | Local direct-vLLM vs Gateway benchmark comparison |
 | `docs/performance_benchmarking.md` | Benchmark profiles, portfolio run commands, and metric interpretation |
 | `docs/portfolio_summary.md` | Final project pitch, demo script, and CV bullets |
