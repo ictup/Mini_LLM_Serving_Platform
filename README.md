@@ -52,6 +52,23 @@ The Gateway exposes OpenAI-compatible `/v1/models` and `/v1/chat/completions`
 endpoints. See `docs/api_usage.md` for curl examples, Python SDK examples,
 streaming usage, error responses, and health check behavior.
 
+## Local end-to-end smoke test
+
+Run a full local mock stack and SDK smoke test with one command:
+
+```bash
+make local-e2e
+```
+
+Or run the script directly:
+
+```bash
+uv run python scripts/local_e2e.py
+```
+
+This starts the mock backend, starts the Gateway in mock mode, waits for
+readiness, runs `benchmark/client_smoke_test.py`, and then stops both services.
+
 ## Docker Compose no-GPU stack
 
 Start the local reproducible stack:

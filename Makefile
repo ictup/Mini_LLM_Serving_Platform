@@ -1,4 +1,4 @@
-.PHONY: dev mock smoke benchmark benchmark-report benchmark-compare test lint format docker-up docker-down docker-gpu-up docker-gpu-down k8s-apply k8s-delete k8s-gpu-apply k8s-gpu-delete helm-template helm-template-gpu helm-install helm-uninstall
+.PHONY: dev mock smoke local-e2e benchmark benchmark-report benchmark-compare test lint format docker-up docker-down docker-gpu-up docker-gpu-down k8s-apply k8s-delete k8s-gpu-apply k8s-gpu-delete helm-template helm-template-gpu helm-install helm-uninstall
 
 dev:
 	uv run uvicorn gateway.app.main:app --reload --host 0.0.0.0 --port 8080
@@ -8,6 +8,9 @@ mock:
 
 smoke:
 	uv run python benchmark/client_smoke_test.py
+
+local-e2e:
+	uv run python scripts/local_e2e.py
 
 benchmark:
 	uv run python benchmark/run_benchmark.py \
