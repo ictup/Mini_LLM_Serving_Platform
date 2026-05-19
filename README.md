@@ -23,8 +23,22 @@ Current step:
 - Docker Compose no-GPU stack with Gateway, mock backend, Redis, Prometheus, and Grafana
 - Optional Docker Compose GPU override for vLLM
 - Kubernetes no-GPU manifests for Gateway, mock backend, Redis, and Prometheus
+- GitHub Actions CI for Python checks and Helm chart validation
 
-Direct vLLM benchmark comparison will be added in later steps.
+Direct vLLM benchmark comparison is available through the benchmark scripts.
+
+## Continuous integration
+
+The repository includes a GitHub Actions workflow at
+`.github/workflows/ci.yml`. It runs on pushes to `main` and on pull requests.
+
+Checks:
+
+- `uv sync --frozen --all-groups`
+- `uv run ruff check .`
+- `uv run pytest`
+- `helm lint deploy/helm`
+- Helm template rendering for both the default mock stack and the optional vLLM stack
 
 ## Docker Compose no-GPU stack
 
