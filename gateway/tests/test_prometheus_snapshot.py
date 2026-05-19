@@ -1,6 +1,7 @@
 import math
 
 from benchmark.collect_prometheus_snapshot import (
+    PROMETHEUS_QUERIES,
     normalize_query_response,
     parse_prometheus_value,
 )
@@ -48,6 +49,13 @@ def test_normalize_query_response_handles_prometheus_error() -> None:
     assert result["status"] == "error"
     assert result["samples"] == []
     assert result["error"] == "bad query"
+
+
+def test_vllm_kv_cache_query_supports_current_and_legacy_metric_names() -> None:
+    query = PROMETHEUS_QUERIES["vllm_kv_cache_usage_percent"]
+
+    assert "vllm:kv_cache_usage_perc" in query
+    assert "vllm:gpu_cache_usage_perc" in query
 
 
 def test_sample_values_extracts_numeric_values_only() -> None:

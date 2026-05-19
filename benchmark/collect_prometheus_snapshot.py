@@ -23,7 +23,9 @@ PROMETHEUS_QUERIES: dict[str, str] = {
     ),
     "vllm_running_requests": "vllm:num_requests_running",
     "vllm_waiting_requests": "vllm:num_requests_waiting",
-    "vllm_kv_cache_usage_percent": "vllm:kv_cache_usage_perc * 100",
+    "vllm_kv_cache_usage_percent": (
+        "(vllm:kv_cache_usage_perc or vllm:gpu_cache_usage_perc) * 100"
+    ),
     "vllm_prompt_tokens_per_second": "sum by (model_name) (rate(vllm:prompt_tokens_total[1m]))",
     "vllm_generation_tokens_per_second": (
         "sum by (model_name) (rate(vllm:generation_tokens_total[1m]))"
