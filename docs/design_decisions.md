@@ -194,10 +194,27 @@ manifests and parameterized through Helm, while leaving cluster-specific choices
 to the target environment.
 
 The current chart includes optional ingress, HPA, external Secret references,
-and vLLM startup probes. It still does not include ServiceMonitor CRDs,
-organization-specific external secret stores, GPU node autoscaling, persistent
-cluster storage, or multi-model routing. Those choices depend on the target
-cluster and organization.
+vLLM startup probes, and Prometheus alert rules. It still does not include
+ServiceMonitor CRDs, organization-specific external secret stores, GPU node
+autoscaling, persistent cluster storage, or cross-backend GPU-aware routing.
+Those choices depend on the target cluster and organization.
+
+## Why Add GitOps Examples?
+
+Manual `helm upgrade --install` commands are useful for local validation, but a
+production platform usually expects changes to flow from Git into the cluster
+through a controller such as Argo CD. The GitOps examples demonstrate that the
+Helm chart is not only a local artifact; it can also be continuously reconciled
+from the repository.
+
+The examples use Argo CD `Application` manifests instead of adding a full
+cluster bootstrap stack. That keeps the project focused while still showing the
+important production path:
+
+- CI publishes a versioned Gateway image to GHCR.
+- Argo CD reads the Helm chart from Git.
+- Runtime Secrets are referenced as existing cluster objects.
+- The mock and vLLM stacks are represented as separate sync targets.
 
 ## Why vLLM Instead of SGLang or TGI for the MVP?
 

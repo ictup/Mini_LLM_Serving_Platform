@@ -155,6 +155,26 @@ shared environment, connect Prometheus to Alertmanager or your managed
 notification path, then tune thresholds against measured traffic and GPU
 capacity.
 
+## GitOps Deployment
+
+Argo CD examples live under `deploy/gitops`. They sync the Helm chart from this
+repository and override image, secret, mock, and vLLM values through
+`valuesObject`.
+
+The examples assume the Gateway image is published to GHCR by
+`.github/workflows/container.yml` and that runtime Secrets already exist in the
+target namespace. This keeps GitOps manifests free of real API keys.
+
+Start with the mock Application to validate Argo CD sync without a GPU, then use
+the vLLM Application for a GPU node pool:
+
+```bash
+kubectl apply -f deploy/gitops/argocd-application-mock.yaml
+kubectl apply -f deploy/gitops/argocd-application-vllm.yaml
+```
+
+See `docs/gitops_deployment.md` for the full workflow and production notes.
+
 ## Final Production Checklist
 
 - Replace all placeholder API keys and tokens.
@@ -166,4 +186,5 @@ capacity.
   rejection reasons.
 - Confirm Prometheus alert rules are loaded and route notifications through the
   environment's Alertmanager or managed alerting service.
+- Validate the Argo CD Application sync path if the cluster is GitOps-managed.
 - Generate a direct-vs-Gateway benchmark report from real GPU runs.

@@ -46,6 +46,15 @@ def test_helm_chart_has_expected_metadata_and_values() -> None:
     assert "modelRoutesJson: '{}'" in values
 
 
+def test_gitops_directory_documents_argocd_entrypoints() -> None:
+    gitops_readme = (ROOT / "deploy/gitops/README.md").read_text(encoding="utf-8")
+
+    assert "argocd-application-mock.yaml" in gitops_readme
+    assert "argocd-application-vllm.yaml" in gitops_readme
+    assert "ghcr.io/ictup/mini-llm-serving-platform:main" in gitops_readme
+    assert "gateway-secret" in gitops_readme
+
+
 def test_helm_gateway_template_preserves_health_and_ready_probes() -> None:
     deployment = read_template("gateway-deployment.yaml")
     config = read_template("gateway-config.yaml")

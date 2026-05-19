@@ -1,0 +1,56 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mini-llm-serving-vllm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: mini-llm-serving
+    app.kubernetes.io/part-of: mini-llm-serving-platform
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/ictup/Mini_LLM_Serving_Platform.git
+    targetRevision: main
+    path: deploy/helm
+    helm:
+      releaseName: mini-llm
+      valuesObject:
+        namespace:
+          create: true
+          name: mini-llm-serving
+        gateway:
+          image: ghcr.io/ictup/mini-llm-serving-platform:main
+          imagePullPolicy: IfNotPresent
+          existingSecretName: gateway-secret
+          modelAliasesJson: '{"qwen-small":"Qwen/Qwen2.5-0.5B-Instruct"}'
+          rateLimit:
+            tokenizerProfilesJson: '{"qwen-small":"qwen2","Qwen/Qwen2.5-0.5B-Instruct":"qwen2"}'
+          autoscaling:
+            enabled: true
+            minReplicas: 1
+            maxReplicas: 3
+        mockBackend:
+          enabled: false
+        prometheus:
+          enabled: true
+          alerting:
+            enabled: true
+        vllm:
+          enabled: true
+          image: vllm/vllm-openai:v0.8.5.post1
+          existingSecretName: vllm-secret
+          model: Qwen/Qwen2.5-0.5B-Instruct
+          dtype: float16
+          maxModelLen: 4096
+          gpuMemoryUtilization: 0.75
+          swapSpace: 1
+          gpu: 1
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: mini-llm-serving
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

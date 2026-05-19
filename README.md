@@ -35,6 +35,7 @@ without claiming to be a full enterprise GPU scheduler.
 - Benchmark tooling for latency, TTFT, inter-token latency, throughput, error
   rate, and Gateway overhead.
 - Deployment assets for Docker Compose, Kubernetes overlays, and Helm values.
+- GitOps examples for Argo CD, backed by a GHCR container image workflow.
 - CI coverage for Python checks, tests, Helm lint, and Helm rendering.
 
 ## Architecture
@@ -235,6 +236,7 @@ requests per level after the local GPU path is stable. See
 | Kubernetes base | `deploy/k8s` | Gateway, mock backend, Redis, Prometheus |
 | Kubernetes GPU overlay | `deploy/k8s-gpu` | Adds vLLM and vLLM metrics scraping |
 | Helm | `deploy/helm` | Parameterized deployment skeleton |
+| GitOps / Argo CD | `deploy/gitops` | Continuous sync of the Helm release |
 
 Validate manifests:
 
@@ -261,6 +263,7 @@ helm template mini-llm deploy/helm \
 | `deploy/k8s` | No-GPU Kubernetes manifests |
 | `deploy/k8s-gpu` | vLLM Kubernetes overlay |
 | `deploy/helm` | Helm chart for mock and vLLM modes |
+| `deploy/gitops` | Argo CD Applications for mock and vLLM modes |
 | `docs` | API, configuration, design decisions, operations, reports |
 
 ## Documentation
@@ -270,6 +273,7 @@ helm template mini-llm deploy/helm \
 - [Design decisions](docs/design_decisions.md)
 - [Failure analysis](docs/failure_analysis.md)
 - [Production hardening notes](docs/production_hardening.md)
+- [GitOps deployment guide](docs/gitops_deployment.md)
 - [Gateway overhead report](docs/gateway_overhead_report.md)
 - [Performance benchmarking guide](docs/performance_benchmarking.md)
 - [Project status and acceptance checklist](docs/project_status.md)

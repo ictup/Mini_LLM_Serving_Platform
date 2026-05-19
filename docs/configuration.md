@@ -14,6 +14,7 @@ Helm deployments.
 | Kubernetes no-GPU | `deploy/k8s/gateway-config.yaml` and `deploy/k8s/gateway-secret.yaml` | Static manifests for the mock stack |
 | Kubernetes GPU | `deploy/k8s-gpu/*` patches and vLLM manifests | Adds vLLM and rewires Gateway to the vLLM service |
 | Helm | `deploy/helm/values.yaml` | Parameterized Kubernetes deployment for mock or vLLM mode |
+| GitOps | `deploy/gitops/*` | Argo CD Applications that sync the Helm chart from Git |
 | Production hardening | `docs/production_hardening.md` | Ingress/TLS, external Secrets, HPA, warmup, alerting, and Grafana persistence |
 | Gateway defaults | `gateway/app/core/config.py` | Last-resort defaults when no environment value is supplied |
 
