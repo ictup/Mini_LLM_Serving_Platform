@@ -40,6 +40,12 @@ Checks:
 - `helm lint deploy/helm`
 - Helm template rendering for both the default mock stack and the optional vLLM stack
 
+## Configuration
+
+Copy `.env.example` to `.env` for local process development. For Docker,
+Kubernetes, and Helm deployments, see the configuration matrix in
+`docs/configuration.md`.
+
 ## Docker Compose no-GPU stack
 
 Start the local reproducible stack:
