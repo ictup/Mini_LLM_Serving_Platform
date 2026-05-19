@@ -215,6 +215,7 @@ uv run python benchmark/compare_results.py \
   --direct-result benchmark/results/<direct-result>.json \
   --gateway-result benchmark/results/<gateway-result>.json \
   --prometheus-snapshot benchmark/results/<prometheus-snapshot>.json \
+  --prometheus-timeseries benchmark/results/<prometheus-timeseries>.json \
   --output docs/gateway_overhead_report.md
 ```
 

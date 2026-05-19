@@ -19,6 +19,12 @@ class PrometheusSnapshot:
 
 
 @dataclass(frozen=True)
+class PrometheusTimeSeries:
+    path: Path
+    payload: dict[str, Any]
+
+
+@dataclass(frozen=True)
 class ComparisonRow:
     concurrency: int
     direct_summary: dict[str, Any]
@@ -30,6 +36,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--direct-result", required=True)
     parser.add_argument("--gateway-result", required=True)
     parser.add_argument("--prometheus-snapshot")
+    parser.add_argument("--prometheus-timeseries")
     parser.add_argument("--output", default="docs/gateway_overhead_report.md")
     return parser.parse_args()
 
@@ -50,6 +57,15 @@ def load_prometheus_snapshot(path: Path) -> PrometheusSnapshot:
     if not isinstance(payload.get("queries"), dict):
         raise ValueError(f"Prometheus snapshot missing queries object: {path}")
     return PrometheusSnapshot(path=path, payload=payload)
+
+
+def load_prometheus_timeseries(path: Path) -> PrometheusTimeSeries:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"Prometheus time series must be a JSON object: {path}")
+    if not isinstance(payload.get("queries"), dict):
+        raise ValueError(f"Prometheus time series missing queries object: {path}")
+    return PrometheusTimeSeries(path=path, payload=payload)
 
 
 def compare_runs(direct_run: BenchmarkRun, gateway_run: BenchmarkRun) -> list[ComparisonRow]:
@@ -87,6 +103,7 @@ def build_comparison_markdown(
     rows: list[ComparisonRow],
     generated_at: str,
     prometheus_snapshot: PrometheusSnapshot | None = None,
+    prometheus_timeseries: PrometheusTimeSeries | None = None,
 ) -> str:
     lines = [
         "# Gateway Overhead Report",
@@ -118,6 +135,9 @@ def build_comparison_markdown(
 
     if prometheus_snapshot is not None:
         lines.extend(prometheus_snapshot_section(prometheus_snapshot))
+
+    if prometheus_timeseries is not None:
+        lines.extend(prometheus_timeseries_section(prometheus_timeseries))
 
     lines.extend(
         [
@@ -174,6 +194,65 @@ def prometheus_snapshot_section(snapshot: PrometheusSnapshot) -> list[str]:
         ]
     )
     return lines
+
+
+def prometheus_timeseries_section(timeseries: PrometheusTimeSeries) -> list[str]:
+    payload = timeseries.payload
+    lines = [
+        "",
+        "## Prometheus Time Series Summary",
+        "",
+        "| Time Series File | Prometheus URL | Started At | Ended At | "
+        "Duration (s) | Interval (s) |",
+        "| --- | --- | --- | --- | ---: | ---: |",
+        markdown_row(
+            [
+                display_path(timeseries.path),
+                str(payload.get("prometheus_url", "n/a")),
+                str(payload.get("started_at", "n/a")),
+                str(payload.get("ended_at", "n/a")),
+                format_float(payload.get("duration_seconds")),
+                format_float(payload.get("interval_seconds")),
+            ]
+        ),
+        "",
+        "| Metric | Points | Samples | Min | Mean | Max | Last |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
+    ]
+
+    queries = payload.get("queries", {})
+    if isinstance(queries, dict):
+        for metric_name in sorted(queries):
+            result = queries[metric_name]
+            if isinstance(result, dict):
+                lines.append(prometheus_timeseries_row(metric_name, result))
+
+    lines.extend(
+        [
+            "",
+            "Prometheus time-series values are sampled while the benchmark is running. "
+            "For gauges, max highlights peak pressure. For rate and histogram queries, "
+            "mean/max summarize the query output over the sampling window.",
+        ]
+    )
+    return lines
+
+
+def prometheus_timeseries_row(metric_name: str, result: dict[str, Any]) -> str:
+    summary = result.get("summary")
+    if not isinstance(summary, dict):
+        summary = {}
+    return markdown_row(
+        [
+            metric_name,
+            format_integer(summary.get("point_count")),
+            format_integer(summary.get("sample_count")),
+            format_float(summary.get("min")),
+            format_float(summary.get("mean")),
+            format_float(summary.get("max")),
+            format_float(summary.get("last")),
+        ]
+    )
 
 
 def prometheus_metric_row(metric_name: str, result: dict[str, Any]) -> str:
@@ -342,6 +421,7 @@ def write_comparison_report(
     gateway_run: BenchmarkRun,
     output_path: Path,
     prometheus_snapshot: PrometheusSnapshot | None = None,
+    prometheus_timeseries: PrometheusTimeSeries | None = None,
 ) -> Path:
     rows = compare_runs(direct_run, gateway_run)
     generated_at = datetime.now(tz=UTC).isoformat(timespec="seconds")
@@ -351,6 +431,7 @@ def write_comparison_report(
         rows=rows,
         generated_at=generated_at,
         prometheus_snapshot=prometheus_snapshot,
+        prometheus_timeseries=prometheus_timeseries,
     )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(report, encoding="utf-8")
@@ -367,11 +448,17 @@ def main() -> None:
         if args.prometheus_snapshot
         else None
     )
+    prometheus_timeseries = (
+        load_prometheus_timeseries(Path(args.prometheus_timeseries))
+        if args.prometheus_timeseries
+        else None
+    )
     write_comparison_report(
         direct_run,
         gateway_run,
         Path(args.output),
         prometheus_snapshot=prometheus_snapshot,
+        prometheus_timeseries=prometheus_timeseries,
     )
 
 

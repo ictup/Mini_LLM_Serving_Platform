@@ -36,6 +36,7 @@ with more available GPU memory.
 | Benchmark report generator | Done | `benchmark/generate_report.py` |
 | Direct-vs-Gateway comparison tool | Done | `benchmark/compare_results.py` |
 | Prometheus metrics snapshot collector | Done | `benchmark/collect_prometheus_snapshot.py` |
+| Prometheus benchmark time-series sampler | Done | `benchmark/sample_prometheus_timeseries.py` |
 | Docker no-GPU stack | Done | `docker-compose.yml` |
 | Docker vLLM GPU override | Done, locally validated | `docker-compose.gpu.yml`, `scripts/warmup_gateway.py` |
 | Kubernetes no-GPU manifests | Done | `deploy/k8s` |

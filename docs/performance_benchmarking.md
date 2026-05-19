@@ -65,6 +65,7 @@ uv run python benchmark/compare_results.py \
   --direct-result benchmark/results/<direct-result>.json \
   --gateway-result benchmark/results/<gateway-result>.json \
   --prometheus-snapshot benchmark/results/<prometheus-snapshot>.json \
+  --prometheus-timeseries benchmark/results/<prometheus-timeseries>.json \
   --output docs/gateway_overhead_report.md
 ```
 
@@ -93,6 +94,29 @@ latency histogram queries.
 
 Pass the snapshot path to `benchmark/compare_results.py` to include a
 point-in-time metrics table in `docs/gateway_overhead_report.md`.
+
+## Prometheus Time Series
+
+A snapshot is useful, but it can miss short spikes. To record serving pressure
+while the benchmark is running, start the time-series sampler in a second
+terminal before launching the direct or Gateway benchmark:
+
+```bash
+uv run python benchmark/sample_prometheus_timeseries.py \
+  --prometheus-url http://localhost:9090 \
+  --duration-seconds 180 \
+  --interval-seconds 5
+```
+
+The sampler writes `benchmark/results/prometheus_timeseries_*.json`. Pass that
+file to `benchmark/compare_results.py` with `--prometheus-timeseries` to add a
+min/mean/max/last table for Gateway and vLLM metrics. The most useful values to
+watch during portfolio runs are vLLM waiting requests, running requests, KV
+cache usage, generation tokens/sec, Gateway P95 latency, and Gateway P95 TTFT.
+
+Choose a duration that fully covers the benchmark. For example, if the
+portfolio run takes about two minutes on a laptop GPU, use `--duration-seconds
+180` so warmup and tail behavior are both captured.
 
 ## Recorded Metrics
 

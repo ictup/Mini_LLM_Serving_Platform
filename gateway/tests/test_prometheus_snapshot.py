@@ -4,6 +4,7 @@ from benchmark.collect_prometheus_snapshot import (
     normalize_query_response,
     parse_prometheus_value,
 )
+from benchmark.sample_prometheus_timeseries import sample_values, summarize_points
 
 
 def test_parse_prometheus_value_converts_numeric_string() -> None:
@@ -47,3 +48,43 @@ def test_normalize_query_response_handles_prometheus_error() -> None:
     assert result["status"] == "error"
     assert result["samples"] == []
     assert result["error"] == "bad query"
+
+
+def test_sample_values_extracts_numeric_values_only() -> None:
+    samples = [
+        {"value": 1.0},
+        {"value": 2},
+        {"value": None},
+        {"value": "3"},
+        "bad",
+    ]
+
+    assert sample_values(samples) == [1.0, 2.0]
+
+
+def test_summarize_points_ignores_non_finite_values() -> None:
+    points = [
+        {"samples": [{"value": 1.0}, {"value": float("nan")}]},
+        {"samples": [{"value": 3.0}]},
+        {"samples": []},
+    ]
+
+    assert summarize_points(points) == {
+        "sample_count": 2,
+        "point_count": 3,
+        "min": 1.0,
+        "mean": 2.0,
+        "max": 3.0,
+        "last": 3.0,
+    }
+
+
+def test_summarize_points_handles_empty_samples() -> None:
+    assert summarize_points([{"samples": []}]) == {
+        "sample_count": 0,
+        "point_count": 1,
+        "min": None,
+        "mean": None,
+        "max": None,
+        "last": None,
+    }

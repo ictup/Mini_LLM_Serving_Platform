@@ -5,11 +5,13 @@ import pytest
 from benchmark.compare_results import (
     BenchmarkRun,
     PrometheusSnapshot,
+    PrometheusTimeSeries,
     build_comparison_markdown,
     compare_runs,
     delta_percent,
     load_benchmark_run,
     load_prometheus_snapshot,
+    load_prometheus_timeseries,
 )
 
 
@@ -172,6 +174,62 @@ def test_build_comparison_markdown_renders_prometheus_snapshot() -> None:
     assert "| vllm_waiting_requests | success | 1 | model_name=qwen, job=vllm: 0.00 |" in report
 
 
+def test_build_comparison_markdown_renders_prometheus_timeseries_summary() -> None:
+    direct_run = BenchmarkRun(
+        path=Path("direct.json"),
+        payload={
+            "base_url": "http://localhost:8000/v1",
+            "model": "backend",
+            "stream": True,
+            "requests_per_level": 10,
+            "summaries": [{"concurrency": 1, "rps": 1.0, "error_rate": 0.0}],
+        },
+    )
+    gateway_run = BenchmarkRun(
+        path=Path("gateway.json"),
+        payload={
+            "base_url": "http://localhost:8080/v1",
+            "model": "qwen-small",
+            "stream": True,
+            "requests_per_level": 10,
+            "summaries": [{"concurrency": 1, "rps": 1.0, "error_rate": 0.0}],
+        },
+    )
+    timeseries = PrometheusTimeSeries(
+        path=Path("benchmark/results/prometheus_timeseries_1.json"),
+        payload={
+            "prometheus_url": "http://localhost:9090",
+            "started_at": "2026-05-19T00:00:00+00:00",
+            "ended_at": "2026-05-19T00:01:00+00:00",
+            "duration_seconds": 60.0,
+            "interval_seconds": 5.0,
+            "queries": {
+                "vllm_waiting_requests": {
+                    "summary": {
+                        "point_count": 12,
+                        "sample_count": 12,
+                        "min": 0.0,
+                        "mean": 1.25,
+                        "max": 4.0,
+                        "last": 0.0,
+                    }
+                }
+            },
+        },
+    )
+
+    report = build_comparison_markdown(
+        direct_run=direct_run,
+        gateway_run=gateway_run,
+        rows=compare_runs(direct_run, gateway_run),
+        generated_at="2026-05-19T00:00:00+00:00",
+        prometheus_timeseries=timeseries,
+    )
+
+    assert "## Prometheus Time Series Summary" in report
+    assert "| vllm_waiting_requests | 12 | 12 | 0.00 | 1.25 | 4.00 | 0.00 |" in report
+
+
 def test_delta_percent_handles_missing_or_zero_baseline() -> None:
     assert delta_percent(8.0, 10.0) == -0.2
     assert delta_percent(8.0, 0.0) is None
@@ -192,3 +250,11 @@ def test_load_prometheus_snapshot_requires_queries(tmp_path) -> None:
 
     with pytest.raises(ValueError, match="missing queries"):
         load_prometheus_snapshot(snapshot_path)
+
+
+def test_load_prometheus_timeseries_requires_queries(tmp_path) -> None:
+    timeseries_path = tmp_path / "timeseries.json"
+    timeseries_path.write_text("{}", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="missing queries"):
+        load_prometheus_timeseries(timeseries_path)
