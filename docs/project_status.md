@@ -40,6 +40,8 @@ presented as fully benchmarked.
 | Kubernetes vLLM GPU overlay | Implemented, needs GPU cluster validation | `deploy/k8s-gpu` |
 | Helm chart | Done | `deploy/helm`, `helm lint`, `helm template` |
 | GitHub Actions CI | Done | `.github/workflows/ci.yml` |
+| Design decisions documentation | Done | `docs/design_decisions.md` |
+| Failure analysis documentation | Done | `docs/failure_analysis.md` |
 | RAG application integration | Not implemented | Future work |
 | Production ingress/TLS | Not implemented | Future work |
 | Autoscaling | Not implemented | Future work |
@@ -124,8 +126,7 @@ Use this checklist on a CUDA-capable host:
 - Add persistent Grafana storage or dashboard export workflow.
 - Add a RAG integration smoke test using this Gateway as the OpenAI-compatible
   backend.
-- Add failure analysis docs for backend timeout, streaming interruption, high
-  p95 latency, and gateway overhead.
+- Add real GPU benchmark results and a finalized gateway overhead report.
 
 ## Documentation Map
 
@@ -134,5 +135,7 @@ Use this checklist on a CUDA-capable host:
 | `README.md` | Quick start, main features, deployment entry points |
 | `docs/api_usage.md` | Client-facing API examples and error shapes |
 | `docs/configuration.md` | Runtime configuration matrix and secret handling |
+| `docs/design_decisions.md` | Architecture choices and tradeoffs |
+| `docs/failure_analysis.md` | Troubleshooting guide for common failures |
 | `docs/benchmark_report.md` | Benchmark report template/output |
 | `docs/project_status.md` | Acceptance checklist, limitations, and next work |

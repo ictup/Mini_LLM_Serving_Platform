@@ -79,6 +79,12 @@ The Gateway exposes OpenAI-compatible `/v1/models` and `/v1/chat/completions`
 endpoints. See `docs/api_usage.md` for curl examples, Python SDK examples,
 streaming usage, error responses, and health check behavior.
 
+## Design and operations docs
+
+- `docs/design_decisions.md`: explains the main architecture choices.
+- `docs/failure_analysis.md`: lists common failures and debugging steps.
+- `docs/project_status.md`: tracks completed capabilities, limitations, and remaining work.
+
 ## Local end-to-end smoke test
 
 Run a full local mock stack and SDK smoke test with one command:
