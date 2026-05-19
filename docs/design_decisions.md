@@ -235,11 +235,11 @@ GPU infrastructure. A useful portfolio project should therefore show how code,
 dependencies, images, and deployment manifests are inspected before release.
 
 The project uses Dependabot for update visibility, `pip-audit` for Python
-dependencies, Trivy for repository/IaC/container scanning, SARIF upload for
-GitHub code scanning, and SBOM/provenance output for container releases. The
-initial Trivy gates are report-first because base-image CVEs can appear without
-code changes; production teams can tighten those gates once they define
-severity thresholds and remediation windows.
+dependencies, Trivy for repository/IaC/container scanning, SARIF artifacts for
+scan evidence, and SBOM/provenance output for container releases. The initial
+Trivy gates are report-first because base-image CVEs can appear without code
+changes; production teams can tighten those gates once they define severity
+thresholds and remediation windows.
 
 ## Why Validate Release Tags?
 

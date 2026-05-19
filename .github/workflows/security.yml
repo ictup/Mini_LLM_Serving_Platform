@@ -12,7 +12,6 @@ on:
 permissions:
   actions: read
   contents: read
-  security-events: write
 
 jobs:
   dependency-audit:
@@ -66,13 +65,6 @@ jobs:
           path: trivy-repository.sarif
           if-no-files-found: warn
 
-      - name: Upload repository scan to code scanning
-        if: always()
-        uses: github/codeql-action/upload-sarif@v3
-        continue-on-error: true
-        with:
-          sarif_file: trivy-repository.sarif
-
   image-scan:
     name: Container image scan and SBOM
     runs-on: ubuntu-latest
@@ -108,13 +100,6 @@ jobs:
           name: trivy-image-sarif
           path: trivy-image.sarif
           if-no-files-found: warn
-
-      - name: Upload image scan to code scanning
-        if: always()
-        uses: github/codeql-action/upload-sarif@v3
-        continue-on-error: true
-        with:
-          sarif_file: trivy-image.sarif
 
       - name: Generate CycloneDX SBOM
         uses: aquasecurity/trivy-action@0.28.0

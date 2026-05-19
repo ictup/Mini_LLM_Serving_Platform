@@ -13,16 +13,14 @@ def test_security_workflow_runs_dependency_audit_and_trivy_scans() -> None:
     assert "name: Security" in workflow
     assert "pull_request:" in workflow
     assert "schedule:" in workflow
-    assert "security-events: write" in workflow
     assert "uv run --with pip-audit pip-audit --strict" in workflow
     assert "aquasecurity/trivy-action@0.28.0" in workflow
     assert "scanners: vuln,secret,misconfig" in workflow
-    assert "github/codeql-action/upload-sarif@v3" in workflow
-    assert "continue-on-error: true" in workflow
     assert "docker/build-push-action@v6" in workflow
     assert "format: cyclonedx" in workflow
     assert "actions/upload-artifact@v4" in workflow
     assert "sbom-cyclonedx.json" in workflow
+    assert "github/codeql-action/upload-sarif" not in workflow
 
 
 def test_security_workflow_scans_repository_and_container_image() -> None:
@@ -66,5 +64,4 @@ def test_security_documentation_covers_local_and_production_workflows() -> None:
     assert "trivy fs" in doc
     assert "CycloneDX SBOM" in doc
     assert "SARIF artifacts" in doc
-    assert "best-effort upload to GitHub code scanning" in doc
     assert "Terraform placeholder Secrets" in doc

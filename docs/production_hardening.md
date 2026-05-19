@@ -195,9 +195,8 @@ Terraform state and must be treated as sensitive.
 
 The repository includes a dedicated security workflow at
 `.github/workflows/security.yml`. It runs `pip-audit`, Trivy repository/IaC
-scans, Trivy container-image scans, SARIF artifact uploads, best-effort GitHub
-code-scanning uploads, and a CycloneDX SBOM artifact for the built Gateway
-image.
+scans, Trivy container-image scans, SARIF artifact uploads, and a CycloneDX
+SBOM artifact for the built Gateway image.
 
 The container publishing workflow also asks Docker Buildx to publish provenance
 and SBOM attestations with the GHCR image. Dependabot is configured for GitHub
@@ -206,8 +205,9 @@ Actions, Python dependencies, and Docker base images.
 The Trivy jobs are report-first by default so a newly disclosed base-image CVE
 does not block every unrelated pull request. A production team can convert those
 steps into hard gates once severity thresholds and remediation SLAs are agreed.
-SARIF files are uploaded as workflow artifacts even when code-scanning upload is
-not available in the target repository.
+SARIF files are uploaded as workflow artifacts so the workflow remains usable in
+personal repositories, forks, and organizations without GitHub code scanning
+enabled.
 
 See `docs/security.md` for local commands and production notes.
 

@@ -21,21 +21,19 @@ It performs three jobs:
 - `dependency-audit`: installs the locked project environment and runs
   `pip-audit`.
 - `repository-scan`: runs Trivy against the repository for dependency,
-  secret, and IaC misconfiguration findings, uploads the SARIF file as an
-  artifact, then attempts a best-effort upload to GitHub code scanning.
+  secret, and IaC misconfiguration findings, then uploads the SARIF file as an
+  artifact.
 - `image-scan`: builds the local Gateway image, scans it with Trivy, uploads
-  the SARIF file as an artifact, attempts a best-effort upload to GitHub code
-  scanning, and publishes a CycloneDX SBOM artifact.
+  the SARIF file as an artifact, and publishes a CycloneDX SBOM artifact.
 
 Trivy scans are configured as report-first checks because container base-image
 CVEs can change independently of project code. The intended production path is
-to review code-scanning alerts, pin patched base images, and tighten exit-code
-gates once a team has an agreed vulnerability SLA.
+to review SARIF artifacts, pin patched base images, and tighten exit-code gates
+once a team has an agreed vulnerability SLA.
 
-SARIF artifacts are the durable evidence for portfolio and release review.
-GitHub code-scanning uploads are allowed to fail without failing the whole
-workflow because repository visibility, permissions, and code-scanning
-availability can differ across forks and personal accounts.
+SARIF artifacts are the durable evidence for portfolio and release review. A
+team using GitHub Advanced Security can add code-scanning upload on top of this
+without changing the scan sources.
 
 ## Local Equivalents
 
@@ -62,8 +60,7 @@ trivy fs --scanners vuln,secret,misconfig --severity HIGH,CRITICAL .
 
 ## Production Notes
 
-- Treat SARIF artifacts and code-scanning findings as triage input, not as a
-  replacement for dependency
+- Treat SARIF artifacts as triage input, not as a replacement for dependency
   ownership.
 - Pin release images by immutable tags or digests before production rollout.
 - Keep generated SBOMs with release artifacts.
