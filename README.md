@@ -83,6 +83,7 @@ streaming usage, error responses, and health check behavior.
 
 - `docs/design_decisions.md`: explains the main architecture choices.
 - `docs/failure_analysis.md`: lists common failures and debugging steps.
+- `docs/rag_integration.md`: shows how a RAG app can call the Gateway.
 - `docs/project_status.md`: tracks completed capabilities, limitations, and remaining work.
 
 ## Local end-to-end smoke test

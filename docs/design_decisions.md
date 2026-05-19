@@ -192,8 +192,8 @@ client can point to this Gateway by changing:
 - `OPENAI_API_KEY`.
 - The model alias.
 
-The RAG integration smoke test is not implemented in this repository yet. The
-intended path is:
+The repository includes a project-local RAG smoke test that validates this
+client boundary. The intended path is:
 
 ```text
 RAG application -> OpenAI-compatible Gateway -> mock or vLLM backend

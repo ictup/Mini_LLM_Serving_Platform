@@ -1,7 +1,13 @@
 import json
 import sys
+from pathlib import Path
 
-from scripts.local_e2e import LocalE2EConfig, build_gateway_env, build_smoke_command
+from scripts.local_e2e import (
+    LocalE2EConfig,
+    build_gateway_env,
+    build_smoke_command,
+    resolve_repo_path,
+)
 
 
 def test_build_gateway_env_routes_requested_alias_to_mock_backend() -> None:
@@ -11,6 +17,7 @@ def test_build_gateway_env_routes_requested_alias_to_mock_backend() -> None:
         mock_port=19000,
         api_key="test-key",
         model="qwen-small",
+        smoke_script="benchmark/client_smoke_test.py",
         timeout_seconds=5,
         skip_streaming=False,
     )
@@ -37,6 +44,7 @@ def test_build_smoke_command_uses_gateway_base_url_and_skip_streaming_flag() -> 
         mock_port=19000,
         api_key="test-key",
         model="mock",
+        smoke_script="benchmark/rag_integration_smoke_test.py",
         timeout_seconds=5,
         skip_streaming=True,
     )
@@ -45,9 +53,21 @@ def test_build_smoke_command_uses_gateway_base_url_and_skip_streaming_flag() -> 
 
     assert command[0] == sys.executable
     assert command[-1] == "--skip-streaming"
+    assert Path(command[1]).as_posix().endswith("benchmark/rag_integration_smoke_test.py")
     assert "--base-url" in command
     assert "http://127.0.0.1:18080/v1" in command
     assert "--api-key" in command
     assert "test-key" in command
     assert "--model" in command
     assert "mock" in command
+
+
+def test_resolve_repo_path_rejects_paths_outside_repository() -> None:
+    outside_path = str(Path(__file__).resolve().anchor)
+
+    try:
+        resolve_repo_path(outside_path)
+    except ValueError as exc:
+        assert "repository root" in str(exc)
+    else:
+        raise AssertionError("outside repository path should be rejected")

@@ -42,7 +42,8 @@ presented as fully benchmarked.
 | GitHub Actions CI | Done | `.github/workflows/ci.yml` |
 | Design decisions documentation | Done | `docs/design_decisions.md` |
 | Failure analysis documentation | Done | `docs/failure_analysis.md` |
-| RAG application integration | Not implemented | Future work |
+| RAG smoke test and integration guide | Done | `benchmark/rag_integration_smoke_test.py`, `docs/rag_integration.md` |
+| External RAG application integration | Not implemented | Needs an external RAG app path/config |
 | Production ingress/TLS | Not implemented | Future work |
 | Autoscaling | Not implemented | Future work |
 | Persistent dashboards/storage | Not implemented | Future work |
@@ -114,7 +115,8 @@ Use this checklist on a CUDA-capable host:
   before any shared or public deployment.
 - Grafana dashboards are provisioned for local experimentation. Long-term
   dashboard persistence is not configured.
-- RAG integration is not implemented in this repository yet.
+- A project-local RAG smoke test is implemented. A specific external RAG
+  application has not been wired to this Gateway yet.
 
 ## Production Hardening Backlog
 
@@ -124,8 +126,8 @@ Use this checklist on a CUDA-capable host:
 - Add HPA or queue-aware autoscaling recommendations.
 - Add model warmup and backend startup readiness behavior for real vLLM models.
 - Add persistent Grafana storage or dashboard export workflow.
-- Add a RAG integration smoke test using this Gateway as the OpenAI-compatible
-  backend.
+- Connect an external RAG application to this Gateway when its path/config is
+  available.
 - Add real GPU benchmark results and a finalized gateway overhead report.
 
 ## Documentation Map
@@ -137,5 +139,6 @@ Use this checklist on a CUDA-capable host:
 | `docs/configuration.md` | Runtime configuration matrix and secret handling |
 | `docs/design_decisions.md` | Architecture choices and tradeoffs |
 | `docs/failure_analysis.md` | Troubleshooting guide for common failures |
+| `docs/rag_integration.md` | RAG client integration pattern and smoke test |
 | `docs/benchmark_report.md` | Benchmark report template/output |
 | `docs/project_status.md` | Acceptance checklist, limitations, and next work |

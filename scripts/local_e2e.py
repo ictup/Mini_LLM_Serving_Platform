@@ -21,6 +21,7 @@ class LocalE2EConfig:
     mock_port: int
     api_key: str
     model: str
+    smoke_script: str
     timeout_seconds: float
     skip_streaming: bool
 
@@ -51,6 +52,11 @@ def parse_args() -> LocalE2EConfig:
         help="Client-facing model alias used by the smoke test.",
     )
     parser.add_argument(
+        "--smoke-script",
+        default="benchmark/client_smoke_test.py",
+        help="Smoke script to run after Gateway readiness. Must live under the repository root.",
+    )
+    parser.add_argument(
         "--timeout-seconds",
         type=float,
         default=30,
@@ -68,6 +74,7 @@ def parse_args() -> LocalE2EConfig:
         mock_port=args.mock_port,
         api_key=args.api_key,
         model=args.model,
+        smoke_script=args.smoke_script,
         timeout_seconds=args.timeout_seconds,
         skip_streaming=args.skip_streaming,
     )
@@ -99,7 +106,7 @@ def build_gateway_env(
 def build_smoke_command(config: LocalE2EConfig) -> list[str]:
     command = [
         sys.executable,
-        str(ROOT / "benchmark" / "client_smoke_test.py"),
+        str(resolve_repo_path(config.smoke_script)),
         "--base-url",
         config.gateway_base_url,
         "--api-key",
@@ -110,6 +117,17 @@ def build_smoke_command(config: LocalE2EConfig) -> list[str]:
     if config.skip_streaming:
         command.append("--skip-streaming")
     return command
+
+
+def resolve_repo_path(path: str) -> Path:
+    candidate = Path(path)
+    if not candidate.is_absolute():
+        candidate = ROOT / candidate
+
+    resolved = candidate.resolve()
+    if not resolved.is_relative_to(ROOT):
+        raise ValueError(f"path must stay under repository root: {path}")
+    return resolved
 
 
 def ensure_port_available(host: str, port: int) -> None:
