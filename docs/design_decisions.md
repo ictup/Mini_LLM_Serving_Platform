@@ -228,6 +228,19 @@ clusters share the same bootstrap code. It also keeps real production secrets
 out of Git by default and documents the state-file risk when placeholder
 Secrets are enabled.
 
+## Why Add Supply-Chain Checks?
+
+LLM serving platforms sit close to credentials, prompts, model artifacts, and
+GPU infrastructure. A useful portfolio project should therefore show how code,
+dependencies, images, and deployment manifests are inspected before release.
+
+The project uses Dependabot for update visibility, `pip-audit` for Python
+dependencies, Trivy for repository/IaC/container scanning, SARIF upload for
+GitHub code scanning, and SBOM/provenance output for container releases. The
+initial Trivy gates are report-first because base-image CVEs can appear without
+code changes; production teams can tighten those gates once they define
+severity thresholds and remediation windows.
+
 ## Why vLLM Instead of SGLang or TGI for the MVP?
 
 vLLM is a practical primary backend for this project because it is widely used,

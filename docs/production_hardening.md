@@ -191,6 +191,23 @@ For shared environments, leave `create_placeholder_secrets=false` and create
 secret provider. If placeholder Secrets are enabled, those values are written to
 Terraform state and must be treated as sensitive.
 
+## Supply-Chain Security
+
+The repository includes a dedicated security workflow at
+`.github/workflows/security.yml`. It runs `pip-audit`, Trivy repository/IaC
+scans, Trivy container-image scans, SARIF uploads to GitHub code scanning, and a
+CycloneDX SBOM artifact for the built Gateway image.
+
+The container publishing workflow also asks Docker Buildx to publish provenance
+and SBOM attestations with the GHCR image. Dependabot is configured for GitHub
+Actions, Python dependencies, and Docker base images.
+
+The Trivy jobs are report-first by default so a newly disclosed base-image CVE
+does not block every unrelated pull request. A production team can convert those
+steps into hard gates once severity thresholds and remediation SLAs are agreed.
+
+See `docs/security.md` for local commands and production notes.
+
 ## Final Production Checklist
 
 - Replace all placeholder API keys and tokens.
@@ -204,4 +221,5 @@ Terraform state and must be treated as sensitive.
   environment's Alertmanager or managed alerting service.
 - Validate the Argo CD Application sync path if the cluster is GitOps-managed.
 - Validate the Terraform plan if cluster entry points are managed through IaC.
+- Review security workflow findings and SBOM artifacts before tagging a release.
 - Generate a direct-vs-Gateway benchmark report from real GPU runs.
