@@ -93,10 +93,11 @@ def build_markdown_report(
                 f"### `{display_path(result_file.path)}`",
                 "",
                 "| Concurrency | Total | Success | Errors | RPS | P50 Latency (ms) | "
-                "P95 Latency (ms) | P50 TTFT (ms) | P95 TTFT (ms) | Mean ITL (ms) | "
+                "P95 Latency (ms) | P99 Latency (ms) | P50 TTFT (ms) | P95 TTFT (ms) | "
+                "P99 TTFT (ms) | P50 ITL (ms) | P95 ITL (ms) | Mean ITL (ms) | "
                 "Output Events/s | Output Events | Error Rate |",
                 "| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | "
-                "---: | ---: | ---: |",
+                "---: | ---: | ---: | ---: | ---: | ---: | ---: |",
             ]
         )
         for summary in result_file.payload["summaries"]:
@@ -130,8 +131,12 @@ def summary_cells(summary: dict[str, Any]) -> list[str]:
         format_float(summary.get("rps")),
         format_float(summary.get("p50_latency_ms")),
         format_float(summary.get("p95_latency_ms")),
+        format_float(summary.get("p99_latency_ms")),
         format_float(summary.get("p50_ttft_ms")),
         format_float(summary.get("p95_ttft_ms")),
+        format_float(summary.get("p99_ttft_ms")),
+        format_float(summary.get("p50_itl_ms")),
+        format_float(summary.get("p95_itl_ms")),
         format_float(summary.get("mean_itl_ms")),
         format_float(output_events_per_second(summary)),
         format_integer(summary.get("output_event_count")),
@@ -140,6 +145,10 @@ def summary_cells(summary: dict[str, Any]) -> list[str]:
 
 
 def output_events_per_second(summary: dict[str, Any]) -> float | None:
+    value = summary.get("output_events_per_second")
+    if isinstance(value, int | float):
+        return float(value)
+
     output_event_count = summary.get("output_event_count")
     duration_seconds = summary.get("duration_seconds")
     if not isinstance(output_event_count, int):

@@ -63,7 +63,9 @@ def test_build_comparison_markdown_renders_overhead_values() -> None:
                     "rps": 10.0,
                     "p50_latency_ms": 100.0,
                     "p95_latency_ms": 150.0,
+                    "p99_latency_ms": 190.0,
                     "p50_ttft_ms": 40.0,
+                    "p95_ttft_ms": 60.0,
                     "error_rate": 0.0,
                 }
             ],
@@ -82,7 +84,9 @@ def test_build_comparison_markdown_renders_overhead_values() -> None:
                     "rps": 8.0,
                     "p50_latency_ms": 120.0,
                     "p95_latency_ms": 180.0,
+                    "p99_latency_ms": 210.0,
                     "p50_ttft_ms": 55.0,
+                    "p95_ttft_ms": 90.0,
                     "error_rate": 0.1,
                 }
             ],
@@ -101,7 +105,10 @@ def test_build_comparison_markdown_renders_overhead_values() -> None:
     assert "| direct backend | benchmark/results/direct.json |" in report
     assert "| gateway | benchmark/results/gateway.json |" in report
     assert "| 1 | 10.00 | 8.00 | -20.00% | 100.00 | 120.00 | 20.00 |" in report
-    assert "150.00 | 180.00 | 30.00 | 40.00 | 55.00 | 15.00 | 10.00 pp" in report
+    assert (
+        "150.00 | 180.00 | 30.00 | 190.00 | 210.00 | 20.00 | "
+        "40.00 | 55.00 | 15.00 | 60.00 | 90.00 | 30.00 | 10.00 pp"
+    ) in report
 
 
 def test_delta_percent_handles_missing_or_zero_baseline() -> None:

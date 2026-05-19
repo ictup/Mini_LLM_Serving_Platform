@@ -8,6 +8,27 @@ from typing import Any
 
 import httpx
 
+PROFILE_DEFAULTS: dict[str, dict[str, Any]] = {
+    "smoke": {
+        "concurrency": [1, 2, 4],
+        "requests_per_level": 10,
+        "max_tokens": 64,
+        "warmup_requests": 0,
+    },
+    "portfolio": {
+        "concurrency": [1, 4, 8, 16, 32],
+        "requests_per_level": 100,
+        "max_tokens": 128,
+        "warmup_requests": 10,
+    },
+    "stress": {
+        "concurrency": [1, 4, 8, 16, 32],
+        "requests_per_level": 1000,
+        "max_tokens": 128,
+        "warmup_requests": 20,
+    },
+}
+
 
 @dataclass(frozen=True)
 class BenchmarkRequestResult:
@@ -30,22 +51,37 @@ class BenchmarkSummary:
     rps: float
     p50_latency_ms: float | None
     p95_latency_ms: float | None
+    p99_latency_ms: float | None
     p50_ttft_ms: float | None
     p95_ttft_ms: float | None
+    p99_ttft_ms: float | None
+    p50_itl_ms: float | None
+    p95_itl_ms: float | None
     mean_itl_ms: float | None
+    output_events_per_second: float | None
     output_event_count: int
     duration_seconds: float
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run a minimal async chat completion benchmark.")
+    parser.add_argument(
+        "--profile",
+        choices=sorted(PROFILE_DEFAULTS),
+        default="smoke",
+        help=(
+            "Benchmark profile. Explicit --concurrency, --requests-per-level, "
+            "--max-tokens, or --warmup-requests values override the profile defaults."
+        ),
+    )
     parser.add_argument("--base-url", default="http://localhost:8080/v1")
     parser.add_argument("--api-key", default="dev-key")
     parser.add_argument("--model", default="mock")
     parser.add_argument("--prompts", default="benchmark/prompts/short_prompts.jsonl")
-    parser.add_argument("--concurrency", type=int, nargs="+", default=[1, 2, 4])
-    parser.add_argument("--requests-per-level", type=int, default=10)
-    parser.add_argument("--max-tokens", type=int, default=64)
+    parser.add_argument("--concurrency", type=int, nargs="+")
+    parser.add_argument("--requests-per-level", type=int)
+    parser.add_argument("--max-tokens", type=int)
+    parser.add_argument("--warmup-requests", type=int)
     parser.add_argument("--timeout-seconds", type=float, default=30)
     parser.add_argument("--output-dir", default="benchmark/results")
     parser.add_argument(
@@ -54,7 +90,34 @@ def parse_args() -> argparse.Namespace:
         default="false",
         help="Use OpenAI-compatible SSE streaming and record TTFT/ITL.",
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+    apply_profile_defaults(args)
+    validate_args(args)
+    return args
+
+
+def apply_profile_defaults(args: argparse.Namespace) -> argparse.Namespace:
+    profile = PROFILE_DEFAULTS[args.profile]
+    if args.concurrency is None:
+        args.concurrency = profile["concurrency"]
+    if args.requests_per_level is None:
+        args.requests_per_level = profile["requests_per_level"]
+    if args.max_tokens is None:
+        args.max_tokens = profile["max_tokens"]
+    if args.warmup_requests is None:
+        args.warmup_requests = profile["warmup_requests"]
+    return args
+
+
+def validate_args(args: argparse.Namespace) -> None:
+    if any(concurrency <= 0 for concurrency in args.concurrency):
+        raise ValueError("--concurrency values must be positive")
+    if args.requests_per_level <= 0:
+        raise ValueError("--requests-per-level must be positive")
+    if args.max_tokens <= 0:
+        raise ValueError("--max-tokens must be positive")
+    if args.warmup_requests < 0:
+        raise ValueError("--warmup-requests cannot be negative")
 
 
 def load_prompt_records(path: Path) -> list[dict[str, Any]]:
@@ -119,6 +182,32 @@ async def run_concurrency_level(
         results=list(results),
         duration_seconds=duration_seconds,
     )
+
+
+async def run_warmup_requests(
+    client: httpx.AsyncClient,
+    prompts: list[dict[str, Any]],
+    model: str,
+    max_tokens: int,
+    stream: bool,
+    warmup_requests: int,
+) -> tuple[int, int]:
+    ok_count = 0
+    error_count = 0
+    for index in range(warmup_requests):
+        prompt_record = prompts[index % len(prompts)]
+        result = await send_chat_completion_request(
+            client=client,
+            model=model,
+            messages=prompt_record["messages"],
+            max_tokens=max_tokens,
+            stream=stream,
+        )
+        if result.ok:
+            ok_count += 1
+        else:
+            error_count += 1
+    return ok_count, error_count
 
 
 async def send_chat_completion_request(
@@ -303,9 +392,14 @@ def summarize_results(
         rps=rps,
         p50_latency_ms=percentile_ms(successful_latencies, 50),
         p95_latency_ms=percentile_ms(successful_latencies, 95),
+        p99_latency_ms=percentile_ms(successful_latencies, 99),
         p50_ttft_ms=percentile_ms(successful_ttfts, 50),
         p95_ttft_ms=percentile_ms(successful_ttfts, 95),
+        p99_ttft_ms=percentile_ms(successful_ttfts, 99),
+        p50_itl_ms=percentile_ms(inter_token_latencies, 50),
+        p95_itl_ms=percentile_ms(inter_token_latencies, 95),
         mean_itl_ms=mean_ms(inter_token_latencies),
+        output_events_per_second=rate_per_second(output_event_count, duration_seconds),
         output_event_count=output_event_count,
         duration_seconds=duration_seconds,
     )
@@ -333,6 +427,12 @@ def mean_ms(values_seconds: list[float]) -> float | None:
     return round((sum(values_seconds) / len(values_seconds)) * 1000, 2)
 
 
+def rate_per_second(count: int, duration_seconds: float) -> float | None:
+    if duration_seconds <= 0:
+        return None
+    return round(count / duration_seconds, 2)
+
+
 async def run_benchmark(args: argparse.Namespace) -> list[BenchmarkSummary]:
     stream = args.stream == "true"
     prompts = load_prompt_records(Path(args.prompts))
@@ -345,6 +445,20 @@ async def run_benchmark(args: argparse.Namespace) -> list[BenchmarkSummary]:
         headers=headers,
         timeout=timeout,
     ) as client:
+        if args.warmup_requests:
+            ok_count, error_count = await run_warmup_requests(
+                client=client,
+                prompts=prompts,
+                model=args.model,
+                max_tokens=args.max_tokens,
+                stream=stream,
+                warmup_requests=args.warmup_requests,
+            )
+            print(
+                f"warmup_requests={args.warmup_requests} "
+                f"ok={ok_count} errors={error_count}"
+            )
+
         for concurrency in args.concurrency:
             summary = await run_concurrency_level(
                 client=client,
@@ -365,15 +479,21 @@ async def run_benchmark(args: argparse.Namespace) -> list[BenchmarkSummary]:
 def print_summary_row(summary: BenchmarkSummary) -> None:
     p50 = format_optional_float(summary.p50_latency_ms)
     p95 = format_optional_float(summary.p95_latency_ms)
+    p99 = format_optional_float(summary.p99_latency_ms)
     p50_ttft = format_optional_float(summary.p50_ttft_ms)
     p95_ttft = format_optional_float(summary.p95_ttft_ms)
+    p99_ttft = format_optional_float(summary.p99_ttft_ms)
+    p50_itl = format_optional_float(summary.p50_itl_ms)
+    p95_itl = format_optional_float(summary.p95_itl_ms)
     mean_itl = format_optional_float(summary.mean_itl_ms)
+    output_rate = format_optional_float(summary.output_events_per_second)
     print(
         f"concurrency={summary.concurrency} total={summary.total_requests} "
         f"ok={summary.success_count} errors={summary.error_count} "
-        f"rps={summary.rps:.2f} p50_ms={p50} p95_ms={p95} "
-        f"p50_ttft_ms={p50_ttft} p95_ttft_ms={p95_ttft} "
-        f"mean_itl_ms={mean_itl} output_events={summary.output_event_count} "
+        f"rps={summary.rps:.2f} p50_ms={p50} p95_ms={p95} p99_ms={p99} "
+        f"p50_ttft_ms={p50_ttft} p95_ttft_ms={p95_ttft} p99_ttft_ms={p99_ttft} "
+        f"p50_itl_ms={p50_itl} p95_itl_ms={p95_itl} mean_itl_ms={mean_itl} "
+        f"output_events_per_second={output_rate} output_events={summary.output_event_count} "
         f"error_rate={summary.error_rate:.2%}"
     )
 
@@ -389,11 +509,18 @@ def write_results(args: argparse.Namespace, summaries: list[BenchmarkSummary]) -
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / f"benchmark_{int(time.time())}.json"
     payload = {
+        "benchmark_schema_version": 2,
+        "profile": args.profile,
         "base_url": args.base_url,
         "model": args.model,
         "stream": args.stream == "true",
+        "prompts": args.prompts,
         "requests_per_level": args.requests_per_level,
         "concurrency": args.concurrency,
+        "max_tokens": args.max_tokens,
+        "warmup_requests": args.warmup_requests,
+        "timeout_seconds": args.timeout_seconds,
+        "created_at_unix": int(time.time()),
         "summaries": [asdict(summary) for summary in summaries],
     }
     output_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")

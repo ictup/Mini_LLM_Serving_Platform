@@ -146,6 +146,7 @@ uv run python benchmark/client_smoke_test.py
 | `docs/failure_analysis.md` | Troubleshooting guide for common failures |
 | `docs/production_hardening.md` | Ingress/TLS, secrets, autoscaling, vLLM readiness, Grafana persistence |
 | `docs/gateway_overhead_report.md` | Local direct-vLLM vs Gateway benchmark comparison |
+| `docs/performance_benchmarking.md` | Benchmark profiles, portfolio run commands, and metric interpretation |
 | `docs/portfolio_summary.md` | Final project pitch, demo script, and CV bullets |
 | `docs/rag_integration.md` | RAG client integration pattern and smoke test |
 | `docs/benchmark_report.md` | Benchmark report template/output |

@@ -29,9 +29,14 @@ def test_build_markdown_report_renders_run_summary_and_metrics() -> None:
                     "rps": 3.1597,
                     "p50_latency_ms": 277.39,
                     "p95_latency_ms": 383.37,
+                    "p99_latency_ms": 401.11,
                     "p50_ttft_ms": 276.41,
                     "p95_ttft_ms": 382.25,
+                    "p99_ttft_ms": 398.17,
+                    "p50_itl_ms": 0.03,
+                    "p95_itl_ms": 0.06,
                     "mean_itl_ms": 0.04,
+                    "output_events_per_second": 15.80,
                     "output_event_count": 15,
                     "duration_seconds": 0.9494,
                 }
@@ -50,9 +55,12 @@ def test_build_markdown_report_renders_run_summary_and_metrics() -> None:
         "mock | streaming | 3 | 1 |"
     ) in report
     assert (
-        "| 1 | 3 | 3 | 0 | 3.16 | 277.39 | 383.37 | 276.41 | 382.25 | "
-        "0.04 | 15.80 | 15 | 0.00% |"
+        "| 1 | 3 | 3 | 0 | 3.16 | 277.39 | 383.37 | 401.11 | 276.41 | "
+        "382.25 | 398.17 | 0.03 | 0.06 | 0.04 | 15.80 | 15 | 0.00% |"
     ) in report
+    assert "P99 Latency" in report
+    assert "P99 TTFT" in report
+    assert "P95 ITL" in report
     assert "Output events count SSE chunks" in report
 
 

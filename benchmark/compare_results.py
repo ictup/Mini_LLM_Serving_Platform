@@ -87,10 +87,12 @@ def build_comparison_markdown(
         "",
         "| Concurrency | Direct RPS | Gateway RPS | RPS Delta | Direct P50 Latency (ms) | "
         "Gateway P50 Latency (ms) | P50 Overhead (ms) | Direct P95 Latency (ms) | "
-        "Gateway P95 Latency (ms) | P95 Overhead (ms) | Direct P50 TTFT (ms) | "
-        "Gateway P50 TTFT (ms) | TTFT Overhead (ms) | Error Delta |",
+        "Gateway P95 Latency (ms) | P95 Overhead (ms) | Direct P99 Latency (ms) | "
+        "Gateway P99 Latency (ms) | P99 Overhead (ms) | Direct P50 TTFT (ms) | "
+        "Gateway P50 TTFT (ms) | P50 TTFT Overhead (ms) | Direct P95 TTFT (ms) | "
+        "Gateway P95 TTFT (ms) | P95 TTFT Overhead (ms) | Error Delta |",
         "| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | "
-        "---: | ---: | ---: | ---: |",
+        "---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
 
     for row in rows:
@@ -140,9 +142,15 @@ def comparison_row(row: ComparisonRow) -> str:
             format_float(direct.get("p95_latency_ms")),
             format_float(gateway.get("p95_latency_ms")),
             format_float(delta(gateway.get("p95_latency_ms"), direct.get("p95_latency_ms"))),
+            format_float(direct.get("p99_latency_ms")),
+            format_float(gateway.get("p99_latency_ms")),
+            format_float(delta(gateway.get("p99_latency_ms"), direct.get("p99_latency_ms"))),
             format_float(direct.get("p50_ttft_ms")),
             format_float(gateway.get("p50_ttft_ms")),
             format_float(delta(gateway.get("p50_ttft_ms"), direct.get("p50_ttft_ms"))),
+            format_float(direct.get("p95_ttft_ms")),
+            format_float(gateway.get("p95_ttft_ms")),
+            format_float(delta(gateway.get("p95_ttft_ms"), direct.get("p95_ttft_ms"))),
             format_percentage_points(delta(gateway.get("error_rate"), direct.get("error_rate"))),
         ]
     )

@@ -170,13 +170,12 @@ Run direct vLLM:
 
 ```bash
 uv run python benchmark/run_benchmark.py \
+  --profile portfolio \
   --base-url http://localhost:8000/v1 \
   --api-key local-vllm-key \
   --model Qwen/Qwen2.5-0.5B-Instruct \
   --prompts benchmark/prompts/short_prompts.jsonl \
-  --concurrency 1 2 \
-  --requests-per-level 5 \
-  --max-tokens 64 \
+  --timeout-seconds 120 \
   --stream true
 ```
 
@@ -184,13 +183,12 @@ Run through the Gateway:
 
 ```bash
 uv run python benchmark/run_benchmark.py \
+  --profile portfolio \
   --base-url http://localhost:8080/v1 \
   --api-key dev-key \
   --model qwen-small \
   --prompts benchmark/prompts/short_prompts.jsonl \
-  --concurrency 1 2 \
-  --requests-per-level 5 \
-  --max-tokens 64 \
+  --timeout-seconds 120 \
   --stream true
 ```
 
@@ -202,6 +200,11 @@ uv run python benchmark/compare_results.py \
   --gateway-result benchmark/results/<gateway-result>.json \
   --output docs/gateway_overhead_report.md
 ```
+
+The `portfolio` profile runs concurrency `1, 4, 8, 16, 32` with 100 measured
+requests per level and 10 warmup requests. Use `--profile stress` for 1000
+requests per level after the local GPU path is stable. See
+[docs/performance_benchmarking.md](docs/performance_benchmarking.md).
 
 ## Deployment Paths
 
@@ -248,6 +251,7 @@ helm template mini-llm deploy/helm \
 - [Failure analysis](docs/failure_analysis.md)
 - [Production hardening notes](docs/production_hardening.md)
 - [Gateway overhead report](docs/gateway_overhead_report.md)
+- [Performance benchmarking guide](docs/performance_benchmarking.md)
 - [Project status and acceptance checklist](docs/project_status.md)
 - [Portfolio summary](docs/portfolio_summary.md)
 - [RAG integration guide](docs/rag_integration.md)

@@ -1,7 +1,10 @@
+import argparse
+
 import pytest
 
 from benchmark.run_benchmark import (
     BenchmarkRequestResult,
+    apply_profile_defaults,
     extract_stream_content,
     load_prompt_records,
     normalize_prompt_record,
@@ -38,6 +41,7 @@ def test_summarize_results_counts_success_errors_and_rps() -> None:
     assert summary.error_rate == pytest.approx(1 / 3)
     assert summary.rps == 1.5
     assert summary.p50_latency_ms == 150.0
+    assert summary.p99_latency_ms == 199.0
 
 
 def test_summarize_results_includes_streaming_metrics() -> None:
@@ -66,8 +70,29 @@ def test_summarize_results_includes_streaming_metrics() -> None:
 
     assert summary.p50_ttft_ms == 150.0
     assert summary.p95_ttft_ms == 195.0
+    assert summary.p99_ttft_ms == 199.0
+    assert summary.p50_itl_ms == 40.0
+    assert summary.p95_itl_ms == 58.0
     assert summary.mean_itl_ms == 40.0
+    assert summary.output_events_per_second == 5.0
     assert summary.output_event_count == 5
+
+
+def test_apply_profile_defaults_uses_portfolio_values_without_overriding_explicit_values() -> None:
+    args = argparse.Namespace(
+        profile="portfolio",
+        concurrency=None,
+        requests_per_level=None,
+        max_tokens=64,
+        warmup_requests=None,
+    )
+
+    apply_profile_defaults(args)
+
+    assert args.concurrency == [1, 4, 8, 16, 32]
+    assert args.requests_per_level == 100
+    assert args.max_tokens == 64
+    assert args.warmup_requests == 10
 
 
 def test_parse_sse_data_line_extracts_data_payload() -> None:
