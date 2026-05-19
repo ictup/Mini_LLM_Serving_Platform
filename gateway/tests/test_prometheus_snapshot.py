@@ -58,6 +58,13 @@ def test_vllm_kv_cache_query_supports_current_and_legacy_metric_names() -> None:
     assert "vllm:gpu_cache_usage_perc" in query
 
 
+def test_vllm_inter_token_query_supports_current_and_legacy_metric_names() -> None:
+    query = PROMETHEUS_QUERIES["vllm_p95_inter_token_latency_seconds"]
+
+    assert "vllm:inter_token_latency_seconds_bucket" in query
+    assert "vllm:time_per_output_token_seconds_bucket" in query
+
+
 def test_sample_values_extracts_numeric_values_only() -> None:
     samples = [
         {"value": 1.0},

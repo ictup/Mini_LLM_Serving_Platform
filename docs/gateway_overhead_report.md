@@ -1,41 +1,41 @@
 # Gateway Overhead Report
 
-Generated at: `2026-05-19T20:37:28+00:00`
+Generated at: `2026-05-19T20:43:20+00:00`
 
 ## Inputs
 
 | Path | Result File | Base URL | Model | Mode | Requests/Level |
 | --- | --- | --- | --- | --- | ---: |
 | direct backend | benchmark/results/benchmark_1779222497.json | http://localhost:8000/v1 | Qwen/Qwen2.5-0.5B-Instruct | streaming | 100 |
-| gateway | benchmark/results/benchmark_1779222956.json | http://localhost:8080/v1 | qwen-small | streaming | 100 |
+| gateway | benchmark/results/benchmark_1779223297.json | http://localhost:8080/v1 | qwen-small | streaming | 100 |
 
 ## Direct Backend vs Gateway
 
 | Concurrency | Direct RPS | Gateway RPS | RPS Delta | Direct P50 Latency (ms) | Gateway P50 Latency (ms) | P50 Overhead (ms) | Direct P95 Latency (ms) | Gateway P95 Latency (ms) | P95 Overhead (ms) | Direct P99 Latency (ms) | Gateway P99 Latency (ms) | P99 Overhead (ms) | Direct P50 TTFT (ms) | Gateway P50 TTFT (ms) | P50 TTFT Overhead (ms) | Direct P95 TTFT (ms) | Gateway P95 TTFT (ms) | P95 TTFT Overhead (ms) | Error Delta | Gateway Error Codes |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| 1 | 1.73 | 1.85 | 7.06% | 369.68 | 334.78 | -34.90 | 1043.08 | 1047.83 | 4.75 | 1079.73 | 1062.95 | -16.78 | 31.16 | 42.54 | 11.38 | 44.47 | 52.93 | 8.46 | 0.00 pp | none |
-| 4 | 5.71 | 5.38 | -5.79% | 464.32 | 468.48 | 4.16 | 1256.95 | 1278.05 | 21.10 | 1279.68 | 1297.34 | 17.66 | 42.89 | 54.69 | 11.80 | 57.51 | 82.13 | 24.62 | 0.00 pp | none |
-| 8 | 9.45 | 9.08 | -3.97% | 507.77 | 515.74 | 7.97 | 1474.63 | 1551.73 | 77.10 | 1489.29 | 1563.41 | 74.12 | 45.35 | 57.66 | 12.31 | 98.91 | 161.24 | 62.33 | 0.00 pp | none |
-| 16 | 13.58 | 12.56 | -7.55% | 693.88 | 809.08 | 115.20 | 2004.51 | 2232.31 | 227.80 | 2034.30 | 2320.18 | 285.88 | 49.89 | 77.95 | 28.06 | 134.05 | 242.43 | 108.38 | 0.00 pp | none |
-| 32 | 17.87 | 15.94 | -10.80% | 1101.15 | 1350.35 | 249.20 | 3121.88 | 3567.71 | 445.83 | 3124.27 | 3568.78 | 444.51 | 67.98 | 124.27 | 56.29 | 268.89 | 477.44 | 208.55 | 0.00 pp | none |
+| 1 | 1.73 | 1.98 | 14.83% | 369.68 | 304.97 | -64.71 | 1043.08 | 896.34 | -146.74 | 1079.73 | 904.84 | -174.89 | 31.16 | 39.27 | 8.11 | 44.47 | 49.78 | 5.31 | 0.00 pp | none |
+| 4 | 5.71 | 6.31 | 10.61% | 464.32 | 370.43 | -93.89 | 1256.95 | 1119.99 | -136.96 | 1279.68 | 1140.63 | -139.05 | 42.89 | 50.63 | 7.74 | 57.51 | 85.77 | 28.26 | 0.00 pp | none |
+| 8 | 9.45 | 10.14 | 7.27% | 507.77 | 479.28 | -28.49 | 1474.63 | 1368.80 | -105.83 | 1489.29 | 1389.05 | -100.24 | 45.35 | 54.08 | 8.73 | 98.91 | 146.56 | 47.65 | 0.00 pp | none |
+| 16 | 13.58 | 14.19 | 4.49% | 693.88 | 683.34 | -10.54 | 2004.51 | 1902.34 | -102.17 | 2034.30 | 1965.12 | -69.18 | 49.89 | 70.16 | 20.27 | 134.05 | 257.35 | 123.30 | 0.00 pp | none |
+| 32 | 17.87 | 16.11 | -9.84% | 1101.15 | 1447.24 | 346.09 | 3121.88 | 3529.36 | 407.48 | 3124.27 | 3585.54 | 461.27 | 67.98 | 169.88 | 101.90 | 268.89 | 472.72 | 203.83 | 0.00 pp | none |
 
 ## Prometheus Snapshot
 
 | Snapshot File | Prometheus URL | Collected At |
 | --- | --- | --- |
-| benchmark/results/prometheus_snapshot_1779223042.json | http://localhost:9090 | 2026-05-19T20:37:22+00:00 |
+| benchmark/results/prometheus_snapshot_1779223391.json | http://localhost:9090 | 2026-05-19T20:43:10+00:00 |
 
 | Metric | Status | Samples | Values |
 | --- | --- | ---: | --- |
 | gateway_error_rate_rps | success | 0 | no samples |
 | gateway_output_chunks_per_second | success | 1 | model=qwen-small, backend_model=Qwen/Qwen2.5-0.5B-Instruct: 0.00 |
-| gateway_p95_latency_seconds | success | 1 | 0.30 |
+| gateway_p95_latency_seconds | success | 1 | 0.26 |
 | gateway_p95_ttft_seconds | success | 1 | model=qwen-small, backend_model=Qwen/Qwen2.5-0.5B-Instruct: 0.09 |
-| gateway_request_rate_rps | success | 1 | 0.28 |
+| gateway_request_rate_rps | success | 1 | 0.27 |
 | vllm_generation_tokens_per_second | success | 1 | model_name=Qwen/Qwen2.5-0.5B-Instruct: 0.00 |
 | vllm_kv_cache_usage_percent | success | 1 | model_name=Qwen/Qwen2.5-0.5B-Instruct, job=vllm, instance=vllm:8000: 0.00 |
-| vllm_p95_e2e_latency_seconds | success | 1 | model_name=Qwen/Qwen2.5-0.5B-Instruct: 3.41 |
-| vllm_p95_inter_token_latency_seconds | success | 0 | no samples |
+| vllm_p95_e2e_latency_seconds | success | 1 | model_name=Qwen/Qwen2.5-0.5B-Instruct: 2.80 |
+| vllm_p95_inter_token_latency_seconds | success | 1 | model_name=Qwen/Qwen2.5-0.5B-Instruct: 0.03 |
 | vllm_p95_ttft_seconds | success | 1 | model_name=Qwen/Qwen2.5-0.5B-Instruct: 0.08 |
 | vllm_prompt_tokens_per_second | success | 1 | model_name=Qwen/Qwen2.5-0.5B-Instruct: 0.00 |
 | vllm_running_requests | success | 1 | model_name=Qwen/Qwen2.5-0.5B-Instruct, job=vllm, instance=vllm:8000: 0.00 |
@@ -47,22 +47,22 @@ Prometheus snapshot values are point-in-time query results collected after the b
 
 | Time Series File | Prometheus URL | Started At | Ended At | Duration (s) | Interval (s) |
 | --- | --- | --- | --- | ---: | ---: |
-| benchmark/results/prometheus_timeseries_1779223033.json | http://localhost:9090 | 2026-05-19T20:34:13+00:00 | 2026-05-19T20:37:13+00:00 | 180.01 | 5.00 |
+| benchmark/results/prometheus_timeseries_1779223382.json | http://localhost:9090 | 2026-05-19T20:40:02+00:00 | 2026-05-19T20:43:02+00:00 | 180.03 | 5.00 |
 
 | Metric | Points | Samples | Min | Mean | Max | Last |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | gateway_error_rate_rps | 37 | 0 | n/a | n/a | n/a | n/a |
-| gateway_output_chunks_per_second | 37 | 37 | 0.00 | 197.15 | 566.63 | 0.00 |
-| gateway_p95_latency_seconds | 37 | 37 | 0.01 | 0.16 | 0.30 | 0.30 |
-| gateway_p95_ttft_seconds | 37 | 36 | 0.04 | 0.07 | 0.22 | 0.09 |
-| gateway_request_rate_rps | 37 | 37 | 0.25 | 3.07 | 8.26 | 0.25 |
-| vllm_generation_tokens_per_second | 37 | 37 | 0.00 | 190.74 | 527.53 | 0.00 |
-| vllm_kv_cache_usage_percent | 37 | 37 | 0.00 | 0.07 | 0.75 | 0.00 |
-| vllm_p95_e2e_latency_seconds | 37 | 36 | 0.75 | 2.12 | 3.41 | 3.41 |
-| vllm_p95_inter_token_latency_seconds | 37 | 0 | n/a | n/a | n/a | n/a |
-| vllm_p95_ttft_seconds | 37 | 36 | 0.04 | 0.06 | 0.19 | 0.08 |
-| vllm_prompt_tokens_per_second | 37 | 37 | 0.00 | 104.06 | 292.56 | 0.00 |
-| vllm_running_requests | 37 | 37 | 0.00 | 2.22 | 22.00 | 0.00 |
+| gateway_output_chunks_per_second | 37 | 37 | 0.00 | 194.45 | 559.41 | 0.00 |
+| gateway_p95_latency_seconds | 37 | 37 | 0.02 | 0.24 | 0.41 | 0.26 |
+| gateway_p95_ttft_seconds | 37 | 37 | 0.04 | 0.08 | 0.10 | 0.09 |
+| gateway_request_rate_rps | 37 | 37 | 0.25 | 3.02 | 8.11 | 0.27 |
+| vllm_generation_tokens_per_second | 37 | 37 | 0.00 | 191.55 | 577.97 | 0.00 |
+| vllm_kv_cache_usage_percent | 37 | 37 | 0.00 | 0.09 | 0.86 | 0.00 |
+| vllm_p95_e2e_latency_seconds | 37 | 37 | 0.87 | 2.69 | 4.12 | 2.80 |
+| vllm_p95_inter_token_latency_seconds | 37 | 37 | 0.01 | 0.03 | 0.04 | 0.03 |
+| vllm_p95_ttft_seconds | 37 | 37 | 0.04 | 0.07 | 0.10 | 0.08 |
+| vllm_prompt_tokens_per_second | 37 | 37 | 0.00 | 104.72 | 314.17 | 0.00 |
+| vllm_running_requests | 37 | 37 | 0.00 | 2.76 | 32.00 | 0.00 |
 | vllm_waiting_requests | 37 | 37 | 0.00 | 0.00 | 0.00 | 0.00 |
 
 Prometheus time-series values are sampled while the benchmark is running. For gauges, max highlights peak pressure. For rate and histogram queries, mean/max summarize the query output over the sampling window.

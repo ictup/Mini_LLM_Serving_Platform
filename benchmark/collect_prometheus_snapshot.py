@@ -40,7 +40,11 @@ PROMETHEUS_QUERIES: dict[str, str] = {
     ),
     "vllm_p95_inter_token_latency_seconds": (
         "histogram_quantile(0.95, "
-        "sum(rate(vllm:inter_token_latency_seconds_bucket[5m])) by (le, model_name))"
+        "("
+        "sum(rate(vllm:inter_token_latency_seconds_bucket[5m])) by (le, model_name) "
+        "or "
+        "sum(rate(vllm:time_per_output_token_seconds_bucket[5m])) by (le, model_name)"
+        "))"
     ),
 }
 
