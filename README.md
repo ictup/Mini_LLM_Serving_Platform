@@ -1,31 +1,58 @@
 # Mini LLM Serving Platform
 
-A production-style OpenAI-compatible LLM serving gateway built step by step from the implementation blueprint.
+A production-style OpenAI-compatible LLM serving gateway built step by step from
+the implementation blueprint.
 
-Current step:
+## Quick start
 
-- FastAPI gateway skeleton
-- `GET /health`
-- `GET /ready`
-- OpenAI-compatible chat completion schemas
-- Mock backend non-streaming `GET /v1/models`
-- Mock backend non-streaming `POST /v1/chat/completions`
-- Gateway non-streaming proxy for `POST /v1/chat/completions`
-- Gateway streaming proxy for `POST /v1/chat/completions`
-- OpenAI Python SDK smoke test for non-streaming and streaming chat completions
-- Bearer API key authentication for Gateway chat completions
-- Prometheus-compatible `/metrics` endpoint with request, error, latency, and streaming metrics
-- Gateway `/v1/models` proxy endpoint
-- Configurable model aliases for stable client-facing model names
-- Minimal async benchmark runner for p50/p95 latency, RPS, and error rate
-- Streaming benchmark metrics for TTFT and ITL
-- Markdown benchmark report generator
-- Docker Compose no-GPU stack with Gateway, mock backend, Redis, Prometheus, and Grafana
-- Optional Docker Compose GPU override for vLLM
-- Kubernetes no-GPU manifests for Gateway, mock backend, Redis, and Prometheus
-- GitHub Actions CI for Python checks and Helm chart validation
+Run the local no-GPU smoke test:
+
+```bash
+uv sync --frozen --all-groups
+uv run python scripts/local_e2e.py
+```
+
+Run the quality gate:
+
+```bash
+uv run ruff check .
+uv run pytest
+```
+
+Start the Docker no-GPU stack:
+
+```bash
+docker compose up --build
+```
+
+## Implemented capabilities
+
+- FastAPI Gateway with `GET /health`, `GET /ready`, `GET /metrics`, `GET /v1/models`, and `POST /v1/chat/completions`.
+- OpenAI-compatible chat completion schemas for non-streaming and streaming requests.
+- Mock OpenAI-compatible backend for reproducible no-GPU development and CI.
+- Gateway proxying to mock or vLLM backends.
+- Streaming SSE proxy with client-facing model alias rewriting.
+- Bearer API key authentication.
+- Request ID propagation with `X-Request-ID`.
+- Redis-backed per-API-key RPM rate limiting.
+- Structured JSON logging with `structlog`.
+- Prometheus metrics for request volume, errors, latency, and streaming behavior.
+- Configurable model aliases for stable client-facing names.
+- OpenAI Python SDK smoke test for non-streaming and streaming completions.
+- Local end-to-end smoke runner for mock backend plus Gateway.
+- Async benchmark runner with latency, throughput, error rate, TTFT, and ITL metrics.
+- Markdown benchmark report generator and direct-vs-Gateway comparison tool.
+- Docker Compose no-GPU stack with Gateway, mock backend, Redis, Prometheus, and Grafana.
+- Optional Docker Compose GPU override for vLLM.
+- Kubernetes no-GPU manifests for Gateway, mock backend, Redis, and Prometheus.
+- Kubernetes GPU overlay for vLLM.
+- Minimal Helm chart for mock and vLLM modes.
+- GitHub Actions CI for Python checks and Helm chart validation.
 
 Direct vLLM benchmark comparison is available through the benchmark scripts.
+
+See `docs/project_status.md` for the acceptance checklist, validation commands,
+known limitations, and remaining production hardening work.
 
 ## Continuous integration
 
