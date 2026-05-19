@@ -5,6 +5,7 @@ from fastapi import Depends, Header, Request
 from fastapi.responses import JSONResponse
 
 from gateway.app.core.config import Settings, get_settings
+from gateway.app.core.error_codes import error_code_headers
 from gateway.app.core.request_id import get_request_id
 from gateway.app.schemas.openai import ErrorDetail, ErrorResponse
 
@@ -56,5 +57,5 @@ async def api_key_auth_exception_handler(
     return JSONResponse(
         status_code=401,
         content=error.model_dump(),
-        headers={"WWW-Authenticate": "Bearer"},
+        headers=error_code_headers("invalid_api_key", {"WWW-Authenticate": "Bearer"}),
     )

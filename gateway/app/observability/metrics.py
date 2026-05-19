@@ -6,6 +6,7 @@ from fastapi import Request, Response
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 
 from gateway.app.core.config import get_settings
+from gateway.app.core.error_codes import ERROR_CODE_HEADER, UNKNOWN_ERROR_CODE
 
 HTTP_REQUESTS_TOTAL = Counter(
     "gateway_http_requests_total",
@@ -16,6 +17,11 @@ HTTP_ERRORS_TOTAL = Counter(
     "gateway_http_errors_total",
     "Total HTTP error responses returned by the gateway.",
     ["method", "path", "status_code"],
+)
+HTTP_REJECTIONS_TOTAL = Counter(
+    "gateway_http_rejections_total",
+    "Total Gateway error responses grouped by stable rejection reason.",
+    ["method", "path", "status_code", "reason"],
 )
 HTTP_REQUEST_DURATION_SECONDS = Histogram(
     "gateway_http_request_duration_seconds",
@@ -63,6 +69,13 @@ async def prometheus_metrics_middleware(
 
     if response.status_code >= 400:
         HTTP_ERRORS_TOTAL.labels(method=method, path=path, status_code=status_code).inc()
+        reason = response.headers.get(ERROR_CODE_HEADER, UNKNOWN_ERROR_CODE)
+        HTTP_REJECTIONS_TOTAL.labels(
+            method=method,
+            path=path,
+            status_code=status_code,
+            reason=reason,
+        ).inc()
 
     return response
 

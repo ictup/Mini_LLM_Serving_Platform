@@ -15,6 +15,7 @@ Before debugging a specific failure, collect these facts:
 - Gateway logs for the same request ID.
 - `/ready` response.
 - `/metrics` output or Grafana panels.
+- `gateway_http_rejections_total` grouped by `reason`.
 - Backend health: mock `/v1/models` or vLLM `/v1/models`.
 
 ## Backend Timeout
@@ -125,6 +126,7 @@ Symptoms:
 - Client receives `401`.
 - Error envelope has `code=invalid_api_key`.
 - Response includes `WWW-Authenticate: Bearer`.
+- Metrics include `gateway_http_rejections_total{reason="invalid_api_key"}`.
 
 Likely causes:
 
@@ -182,6 +184,9 @@ Symptoms:
 - Client receives `429` earlier than expected.
 - One user appears to consume another user's quota.
 - Local E2E passes, but Docker or Kubernetes traffic gets rate limited.
+- Metrics include `reason=rate_limit_exceeded`,
+  `reason=token_rate_limit_exceeded`, or
+  `reason=concurrent_request_limit_exceeded`.
 
 Likely causes:
 
@@ -221,6 +226,7 @@ Symptoms:
 - Client receives `400` with `code=too_many_messages`,
   `code=chat_message_too_large`, or `code=chat_messages_too_large`.
 - The backend does not receive the request.
+- Metrics include the same error code as the `reason` label.
 
 Likely causes:
 
@@ -357,6 +363,8 @@ Likely causes:
 - GPU overlay is applied to a cluster without NVIDIA GPU support.
 - Secret placeholders were not replaced.
 - Service names differ from expected Gateway backend URLs.
+- Ingress references a TLS Secret that does not exist.
+- HPA is enabled but metrics-server is not installed.
 
 Checks:
 
@@ -366,6 +374,8 @@ kubectl kustomize deploy/k8s-gpu
 helm template mini-llm deploy/helm --namespace mini-llm-serving
 kubectl -n mini-llm-serving describe pod <pod-name>
 kubectl -n mini-llm-serving logs <pod-name>
+kubectl -n mini-llm-serving describe ingress gateway
+kubectl -n mini-llm-serving get hpa gateway
 ```
 
 Fixes:
@@ -375,3 +385,7 @@ Fixes:
 - Replace example Secret values before shared deployments.
 - Confirm Gateway config points to `mock-backend:9000` or `vllm:8000` inside the
   cluster.
+- Create the TLS Secret referenced by ingress or disable ingress until TLS is
+  ready.
+- Install metrics-server or disable Gateway HPA in clusters without resource
+  metrics.

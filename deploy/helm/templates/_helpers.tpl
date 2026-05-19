@@ -11,3 +11,19 @@ app.kubernetes.io/managed-by: Helm
 {{ include "mini-llm.labels" . }}
 app.kubernetes.io/name: {{ .name }}
 {{- end -}}
+
+{{- define "mini-llm.gatewaySecretName" -}}
+{{- if .Values.gateway.existingSecretName -}}
+{{ .Values.gateway.existingSecretName }}
+{{- else -}}
+gateway-secret
+{{- end -}}
+{{- end -}}
+
+{{- define "mini-llm.vllmSecretName" -}}
+{{- if .Values.vllm.existingSecretName -}}
+{{ .Values.vllm.existingSecretName }}
+{{- else -}}
+vllm-secret
+{{- end -}}
+{{- end -}}

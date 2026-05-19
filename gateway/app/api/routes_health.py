@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from gateway.app.core.config import Settings, get_settings
+from gateway.app.core.error_codes import error_code_headers
 from gateway.app.proxy.backend_client import BackendClient, BackendClientError
 
 router = APIRouter(tags=["health"])
@@ -41,6 +42,7 @@ async def ready(settings: SettingsDependency) -> ReadyResponse | JSONResponse:
                 backend_type=settings.backend_type,
                 models="unavailable",
             ).model_dump(),
+            headers=error_code_headers(exc.code),
         )
 
     model_count = count_models(models_response)
@@ -53,6 +55,7 @@ async def ready(settings: SettingsDependency) -> ReadyResponse | JSONResponse:
                 backend_type=settings.backend_type,
                 models="empty",
             ).model_dump(),
+            headers=error_code_headers("backend_model_list_empty"),
         )
 
     return ReadyResponse(

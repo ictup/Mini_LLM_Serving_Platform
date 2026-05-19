@@ -466,6 +466,55 @@
       ],
       "title": "Error Responses",
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 33
+      },
+      "id": 9,
+      "options": {
+        "legend": {
+          "calcs": ["lastNotNull"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (reason, status_code) (rate(gateway_http_rejections_total[1m]))",
+          "legendFormat": "{{reason}} {{status_code}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Rejections by Reason",
+      "type": "timeseries"
     }
   ],
   "refresh": "5s",
@@ -482,6 +531,6 @@
   "timezone": "browser",
   "title": "Gateway Overview",
   "uid": "gateway-overview",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }

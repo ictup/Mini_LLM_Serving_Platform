@@ -4,6 +4,7 @@ from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 
 from gateway.app.core.config import Settings, get_settings
+from gateway.app.core.error_codes import error_code_headers
 from gateway.app.core.request_id import REQUEST_ID_HEADER, get_request_id, normalize_request_id
 from gateway.app.schemas.openai import ChatCompletionRequest, ErrorDetail, ErrorResponse
 
@@ -34,7 +35,11 @@ async def request_body_size_middleware(
             ),
             request_id=request_id,
         )
-        response = JSONResponse(status_code=413, content=error.model_dump())
+        response = JSONResponse(
+            status_code=413,
+            content=error.model_dump(),
+            headers=error_code_headers("request_body_too_large"),
+        )
         response.headers[REQUEST_ID_HEADER] = request_id
         return response
 
@@ -84,7 +89,11 @@ async def chat_request_limit_exception_handler(
         ),
         request_id=get_request_id(request),
     )
-    return JSONResponse(status_code=400, content=error.model_dump())
+    return JSONResponse(
+        status_code=400,
+        content=error.model_dump(),
+        headers=error_code_headers(exc.code),
+    )
 
 
 def _parse_content_length(header_value: str | None) -> int | None:

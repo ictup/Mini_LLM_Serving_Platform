@@ -30,6 +30,7 @@ presented as fully benchmarked.
 | Request body and chat input limits | Done | `gateway/app/core/request_limits.py` |
 | Structured logging | Done | `gateway/app/core/logging.py` |
 | Prometheus metrics | Done | `gateway/app/observability/metrics.py` |
+| Rejection reason metrics | Done | `gateway_http_rejections_total` |
 | Grafana dashboards | Done | `monitoring/grafana/dashboards/*` |
 | Local end-to-end smoke runner | Done | `scripts/local_e2e.py` |
 | Benchmark runner | Done | `benchmark/run_benchmark.py` |
@@ -45,9 +46,11 @@ presented as fully benchmarked.
 | Failure analysis documentation | Done | `docs/failure_analysis.md` |
 | RAG smoke test and integration guide | Done | `benchmark/rag_integration_smoke_test.py`, `docs/rag_integration.md` |
 | External RAG application integration | Not implemented | Needs an external RAG app path/config |
-| Production ingress/TLS | Not implemented | Future work |
-| Autoscaling | Not implemented | Future work |
-| Persistent dashboards/storage | Not implemented | Future work |
+| Production ingress/TLS | Implemented as examples | `deploy/k8s/gateway-ingress.yaml`, Helm ingress values |
+| Autoscaling | Implemented as examples | `deploy/k8s/gateway-hpa.yaml`, Helm autoscaling values |
+| Secret management strategy | Implemented as examples | Helm `existingSecretName`, `deploy/k8s/examples/external-secrets.yaml` |
+| vLLM startup and warmup handling | Implemented as examples | vLLM startup probes, `scripts/warmup_gateway.py` |
+| Persistent dashboards/storage | Implemented for local stack | Docker `grafana-data` volume, dashboard JSON workflow |
 
 ## Validation Commands
 
@@ -110,9 +113,10 @@ Use this checklist on a CUDA-capable host:
 - Rate limiting uses an estimated token count instead of a model-specific
   tokenizer. This keeps the Gateway backend-neutral, but real token accounting
   may differ by model.
-- Kubernetes and Helm assets are intentionally minimal. They do not include
-  ingress, TLS, HPA, ServiceMonitor CRDs, persistent volumes, external secrets,
-  or multi-model routing.
+- Kubernetes and Helm assets include basic ingress, TLS, HPA, external Secret,
+  and vLLM startup examples. They still do not include ServiceMonitor CRDs,
+  cluster-specific GPU autoscaling, organization-specific secret stores,
+  persistent cluster storage, or multi-model routing.
 - Secrets in example manifests are local placeholders and must be replaced
   before any shared or public deployment.
 - Grafana dashboards are provisioned for local experimentation. Long-term
@@ -120,12 +124,8 @@ Use this checklist on a CUDA-capable host:
 - A project-local RAG smoke test is implemented. A specific external RAG
   application has not been wired to this Gateway yet.
 
-## Production Hardening Backlog
+## Remaining External Validation Work
 
-- Add ingress/TLS examples and a deployment-specific secret management strategy.
-- Add HPA or queue-aware autoscaling recommendations.
-- Add model warmup and backend startup readiness behavior for real vLLM models.
-- Add persistent Grafana storage or dashboard export workflow.
 - Connect an external RAG application to this Gateway when its path/config is
   available.
 - Add real GPU benchmark results and a finalized gateway overhead report.
@@ -139,6 +139,7 @@ Use this checklist on a CUDA-capable host:
 | `docs/configuration.md` | Runtime configuration matrix and secret handling |
 | `docs/design_decisions.md` | Architecture choices and tradeoffs |
 | `docs/failure_analysis.md` | Troubleshooting guide for common failures |
+| `docs/production_hardening.md` | Ingress/TLS, secrets, autoscaling, vLLM readiness, Grafana persistence |
 | `docs/rag_integration.md` | RAG client integration pattern and smoke test |
 | `docs/benchmark_report.md` | Benchmark report template/output |
 | `docs/project_status.md` | Acceptance checklist, limitations, and next work |

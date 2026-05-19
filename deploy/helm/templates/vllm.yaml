@@ -9,11 +9,12 @@ metadata:
 data:
   VLLM_MODEL: {{ .Values.vllm.model | quote }}
   VLLM_DTYPE: {{ .Values.vllm.dtype | quote }}
+{{- if not .Values.vllm.existingSecretName }}
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: vllm-secret
+  name: {{ include "mini-llm.vllmSecretName" . }}
   namespace: {{ .Values.namespace.name }}
   labels:
 {{ include "mini-llm.componentLabels" (dict "name" "vllm") | indent 4 }}
@@ -21,6 +22,7 @@ type: Opaque
 stringData:
   VLLM_API_KEY: {{ .Values.vllm.apiKey | quote }}
   HUGGING_FACE_HUB_TOKEN: {{ .Values.vllm.huggingFaceHubToken | quote }}
+{{- end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -59,7 +61,7 @@ spec:
             - configMapRef:
                 name: vllm-config
             - secretRef:
-                name: vllm-secret
+                name: {{ include "mini-llm.vllmSecretName" . }}
           ports:
             - name: http
               containerPort: {{ .Values.vllm.service.port }}
@@ -70,18 +72,25 @@ spec:
             httpGet:
               path: /health
               port: http
-            initialDelaySeconds: 60
-            periodSeconds: 20
-            timeoutSeconds: 5
-            failureThreshold: 6
+            initialDelaySeconds: {{ .Values.vllm.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.vllm.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.vllm.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.vllm.livenessProbe.failureThreshold }}
           readinessProbe:
             httpGet:
               path: /health
               port: http
-            initialDelaySeconds: 60
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 30
+            initialDelaySeconds: {{ .Values.vllm.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.vllm.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.vllm.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.vllm.readinessProbe.failureThreshold }}
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: {{ .Values.vllm.startupProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.vllm.startupProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.vllm.startupProbe.failureThreshold }}
 ---
 apiVersion: v1
 kind: Service

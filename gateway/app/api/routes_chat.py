@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
 from gateway.app.core.config import Settings, get_settings
+from gateway.app.core.error_codes import error_code_headers
 from gateway.app.core.rate_limit import enforce_chat_rate_limit
 from gateway.app.core.request_id import get_request_id
 from gateway.app.core.request_limits import validate_chat_request_limits
@@ -49,7 +50,11 @@ async def create_chat_completion(
                 ),
                 request_id=request_id,
             )
-            return JSONResponse(status_code=400, content=error.model_dump())
+            return JSONResponse(
+                status_code=400,
+                content=error.model_dump(),
+                headers=error_code_headers("model_not_found"),
+            )
 
         logger.info(
             "chat_completion_request",
@@ -108,7 +113,11 @@ async def create_chat_completion(
                 ),
                 request_id=request_id,
             )
-            return JSONResponse(status_code=exc.status_code, content=error.model_dump())
+            return JSONResponse(
+                status_code=exc.status_code,
+                content=error.model_dump(),
+                headers=error_code_headers(exc.code),
+            )
     finally:
         if not stream_owns_rate_limit_lease:
             await rate_limit_lease.release()

@@ -14,6 +14,7 @@ Helm deployments.
 | Kubernetes no-GPU | `deploy/k8s/gateway-config.yaml` and `deploy/k8s/gateway-secret.yaml` | Static manifests for the mock stack |
 | Kubernetes GPU | `deploy/k8s-gpu/*` patches and vLLM manifests | Adds vLLM and rewires Gateway to the vLLM service |
 | Helm | `deploy/helm/values.yaml` | Parameterized Kubernetes deployment for mock or vLLM mode |
+| Production hardening | `docs/production_hardening.md` | Ingress/TLS, external Secrets, HPA, warmup, and Grafana persistence |
 | Gateway defaults | `gateway/app/core/config.py` | Last-resort defaults when no environment value is supplied |
 
 ## Gateway Runtime Variables
@@ -104,6 +105,15 @@ helm upgrade --install mini-llm deploy/helm \
   --set mockBackend.enabled=false \
   --set vllm.apiKey='<gateway-to-vllm-key>' \
   --set vllm.huggingFaceHubToken='<hf-token-if-needed>'
+```
+
+For shared environments, prefer pre-created Secrets or External Secrets:
+
+```bash
+helm upgrade --install mini-llm deploy/helm \
+  --namespace mini-llm-serving \
+  --set gateway.existingSecretName=gateway-secret \
+  --set vllm.existingSecretName=vllm-secret
 ```
 
 ## Backend Mode Checklist

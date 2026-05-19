@@ -7,6 +7,8 @@ VLLM_DASHBOARD_PATH = ROOT / "monitoring/grafana/dashboards/vllm-engine-overview
 DATASOURCE_PATH = ROOT / "monitoring/grafana/provisioning/datasources/prometheus.yml"
 PROVIDER_PATH = ROOT / "monitoring/grafana/provisioning/dashboards/gateway.yml"
 PROMETHEUS_GPU_PATH = ROOT / "monitoring/prometheus/prometheus.gpu.yml"
+DOCKER_COMPOSE_PATH = ROOT / "docker-compose.yml"
+DOCKER_COMPOSE_GPU_PATH = ROOT / "docker-compose.gpu.yml"
 
 
 def test_grafana_dashboard_json_references_gateway_metrics() -> None:
@@ -20,7 +22,7 @@ def test_grafana_dashboard_json_references_gateway_metrics() -> None:
 
     assert dashboard["uid"] == "gateway-overview"
     assert dashboard["title"] == "Gateway Overview"
-    assert len(dashboard["panels"]) == 8
+    assert len(dashboard["panels"]) == 9
     assert any("gateway_http_requests_total" in expression for expression in expressions)
     assert any("gateway_http_errors_total" in expression for expression in expressions)
     assert any(
@@ -35,6 +37,7 @@ def test_grafana_dashboard_json_references_gateway_metrics() -> None:
     assert any(
         "gateway_stream_output_chunks_total" in expression for expression in expressions
     )
+    assert any("gateway_http_rejections_total" in expression for expression in expressions)
 
 
 def test_grafana_provisioning_uses_prometheus_uid_and_dashboard_path() -> None:
@@ -81,3 +84,19 @@ def test_gpu_prometheus_config_scrapes_vllm() -> None:
     assert "job_name: gateway" in prometheus_gpu_config
     assert "job_name: vllm" in prometheus_gpu_config
     assert "vllm:8000" in prometheus_gpu_config
+
+
+def test_docker_compose_persists_grafana_state() -> None:
+    compose = DOCKER_COMPOSE_PATH.read_text(encoding="utf-8")
+
+    assert "grafana-data:/var/lib/grafana" in compose
+    assert "volumes:" in compose
+    assert "grafana-data:" in compose
+
+
+def test_gpu_compose_waits_for_vllm_healthcheck() -> None:
+    compose = DOCKER_COMPOSE_GPU_PATH.read_text(encoding="utf-8")
+
+    assert "condition: service_healthy" in compose
+    assert "healthcheck:" in compose
+    assert "http://127.0.0.1:8000/health" in compose

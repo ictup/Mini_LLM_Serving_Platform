@@ -6,6 +6,8 @@ resources:
   - gateway-secret.yaml
   - gateway-deployment.yaml
   - gateway-service.yaml
+  - gateway-ingress.yaml
+  - gateway-hpa.yaml
   - mock-backend-deployment.yaml
   - mock-backend-service.yaml
   - redis-deployment.yaml

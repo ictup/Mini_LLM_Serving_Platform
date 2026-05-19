@@ -17,6 +17,7 @@ usually sit around an inference engine:
 - Stable model aliases.
 - Error normalization.
 - User-facing metrics.
+- Rejection reason metrics.
 - Structured logs.
 - A single client-facing contract even if the backend changes.
 
@@ -117,6 +118,10 @@ The Gateway metrics answer client-facing questions:
 Grafana turns those metrics into an operational dashboard that can be checked
 while running smoke tests or benchmarks.
 
+Error responses also emit `gateway_http_rejections_total` with a bounded
+`reason` label derived from Gateway error codes. This is more actionable than
+only looking at status codes while still avoiding high-cardinality labels.
+
 ## Gateway Metrics vs vLLM Metrics
 
 Gateway metrics and vLLM metrics answer different questions.
@@ -176,13 +181,16 @@ Once those boundaries are stable, Kubernetes and Helm can mirror them.
 
 ## Why Keep Kubernetes and Helm Minimal?
 
-The Kubernetes and Helm assets are deployment skeletons. They prove that the
-service boundaries can be expressed as manifests and parameterized through Helm,
-but they avoid pretending to be a complete production platform.
+The Kubernetes and Helm assets are deployment skeletons with practical
+production hooks. They prove that the service boundaries can be expressed as
+manifests and parameterized through Helm, while leaving cluster-specific choices
+to the target environment.
 
-The current chart intentionally does not include ingress, TLS, HPA,
-ServiceMonitor CRDs, external secrets, persistent storage, or multi-model
-routing. Those choices depend on the target cluster and organization.
+The current chart includes optional ingress, HPA, external Secret references,
+and vLLM startup probes. It still does not include ServiceMonitor CRDs,
+organization-specific external secret stores, GPU node autoscaling, persistent
+cluster storage, or multi-model routing. Those choices depend on the target
+cluster and organization.
 
 ## Why vLLM Instead of SGLang or TGI for the MVP?
 

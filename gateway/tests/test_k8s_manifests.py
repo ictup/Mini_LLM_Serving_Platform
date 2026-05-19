@@ -3,6 +3,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 K8S_DIR = ROOT / "deploy/k8s"
 K8S_GPU_DIR = ROOT / "deploy/k8s-gpu"
+K8S_EXAMPLES_DIR = K8S_DIR / "examples"
 
 
 def read_manifest(name: str) -> str:
@@ -11,6 +12,10 @@ def read_manifest(name: str) -> str:
 
 def read_gpu_manifest(name: str) -> str:
     return (K8S_GPU_DIR / name).read_text(encoding="utf-8")
+
+
+def read_example_manifest(name: str) -> str:
+    return (K8S_EXAMPLES_DIR / name).read_text(encoding="utf-8")
 
 
 def test_kustomization_lists_no_gpu_stack_resources() -> None:
@@ -22,6 +27,8 @@ def test_kustomization_lists_no_gpu_stack_resources() -> None:
         "gateway-secret.yaml",
         "gateway-deployment.yaml",
         "gateway-service.yaml",
+        "gateway-ingress.yaml",
+        "gateway-hpa.yaml",
         "mock-backend-deployment.yaml",
         "mock-backend-service.yaml",
         "redis-deployment.yaml",
@@ -43,6 +50,22 @@ def test_gateway_k8s_manifest_uses_ready_and_health_probes() -> None:
     assert "path: /ready" in manifest
     assert "name: gateway-config" in manifest
     assert "name: gateway-secret" in manifest
+    assert "requests:" in manifest
+    assert "cpu: 100m" in manifest
+    assert "memory: 256Mi" in manifest
+
+
+def test_gateway_k8s_ingress_and_hpa_are_configured() -> None:
+    ingress = read_manifest("gateway-ingress.yaml")
+    hpa = read_manifest("gateway-hpa.yaml")
+
+    assert "kind: Ingress" in ingress
+    assert "ingressClassName: nginx" in ingress
+    assert "secretName: mini-llm-serving-tls" in ingress
+    assert "nginx.ingress.kubernetes.io/proxy-body-size" in ingress
+    assert "kind: HorizontalPodAutoscaler" in hpa
+    assert "maxReplicas: 3" in hpa
+    assert "averageUtilization: 70" in hpa
 
 
 def test_gateway_k8s_config_points_to_cluster_services() -> None:
@@ -118,6 +141,8 @@ def test_vllm_k8s_manifest_requests_gpu_and_exposes_service() -> None:
     assert "- --api-key" in deployment
     assert "- $(VLLM_API_KEY)" in deployment
     assert "path: /health" in deployment
+    assert "startupProbe:" in deployment
+    assert "failureThreshold: 60" in deployment
     assert "name: vllm" in service
     assert "port: 8000" in service
 
@@ -128,3 +153,12 @@ def test_gpu_prometheus_patch_scrapes_vllm_metrics() -> None:
     assert "job_name: gateway" in manifest
     assert "job_name: vllm" in manifest
     assert "vllm:8000" in manifest
+
+
+def test_external_secret_example_documents_required_secret_keys() -> None:
+    manifest = read_example_manifest("external-secrets.yaml")
+
+    assert "kind: ExternalSecret" in manifest
+    assert "secretKey: API_KEYS" in manifest
+    assert "secretKey: VLLM_API_KEY" in manifest
+    assert "secretKey: HUGGING_FACE_HUB_TOKEN" in manifest

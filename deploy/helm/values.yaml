@@ -7,6 +7,7 @@ gateway:
   image: mini-llm-serving-platform:local
   imagePullPolicy: IfNotPresent
   apiKeys: dev-key,team-a-key
+  existingSecretName: ""
   logLevel: INFO
   rateLimit:
     enabled: true
@@ -22,6 +23,26 @@ gateway:
   service:
     port: 8080
   modelAliasesJson: '{"mock":"mock","qwen-small":"mock"}'
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  ingress:
+    enabled: false
+    className: nginx
+    host: mini-llm.local
+    tlsSecretName: mini-llm-serving-tls
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-body-size: "1m"
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 70
 
 mockBackend:
   enabled: true
@@ -48,8 +69,23 @@ vllm:
   image: vllm/vllm-openai:latest
   model: Qwen/Qwen2.5-1.5B-Instruct
   apiKey: local-vllm-key
+  existingSecretName: ""
   dtype: auto
   huggingFaceHubToken: ""
   gpu: 1
+  startupProbe:
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 60
+  readinessProbe:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
+  livenessProbe:
+    initialDelaySeconds: 120
+    periodSeconds: 20
+    timeoutSeconds: 5
+    failureThreshold: 6
   service:
     port: 8000

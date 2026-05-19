@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from redis.asyncio import Redis
 
 from gateway.app.core.config import Settings, get_settings
+from gateway.app.core.error_codes import error_code_headers
 from gateway.app.core.request_id import get_request_id
 from gateway.app.core.security import require_api_key
 from gateway.app.schemas.openai import ChatCompletionRequest, ErrorDetail, ErrorResponse
@@ -257,4 +258,8 @@ async def rate_limit_exception_handler(
         ),
         request_id=get_request_id(request),
     )
-    return JSONResponse(status_code=429, content=error.model_dump())
+    return JSONResponse(
+        status_code=429,
+        content=error.model_dump(),
+        headers=error_code_headers(code),
+    )

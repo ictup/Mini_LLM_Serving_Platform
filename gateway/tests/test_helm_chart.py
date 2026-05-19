@@ -27,6 +27,11 @@ def test_helm_chart_has_expected_metadata_and_values() -> None:
     assert "maxChatMessages: 64" in values
     assert "maxChatMessageChars: 16000" in values
     assert "maxChatTotalMessageChars: 64000" in values
+    assert "existingSecretName: \"\"" in values
+    assert "ingress:" in values
+    assert "autoscaling:" in values
+    assert "targetCPUUtilizationPercentage: 70" in values
+    assert "startupProbe:" in values
     assert "mockBackend:" in values
     assert "redis:" in values
     assert "prometheus:" in values
@@ -43,7 +48,9 @@ def test_helm_gateway_template_preserves_health_and_ready_probes() -> None:
     assert "path: /health" in deployment
     assert "path: /ready" in deployment
     assert "name: gateway-config" in deployment
-    assert "name: gateway-secret" in deployment
+    assert "mini-llm.gatewaySecretName" in deployment
+    assert "resources:" in deployment
+    assert "toYaml .Values.gateway.resources" in deployment
     assert "BACKEND_TYPE: mock" in config
     assert "BACKEND_TYPE: vllm" in config
     assert "RATE_LIMIT_TPM:" in config
@@ -67,8 +74,27 @@ def test_helm_chart_templates_optional_vllm_backend() -> None:
     assert "- $(VLLM_MODEL)" in vllm
     assert "- $(VLLM_API_KEY)" in vllm
     assert "nvidia.com/gpu: {{ .Values.vllm.gpu | quote }}" in vllm
+    assert "startupProbe:" in vllm
+    assert "mini-llm.vllmSecretName" in vllm
     assert "job_name: vllm" in prometheus
     assert "vllm:{{ .Values.vllm.service.port }}" in prometheus
+
+
+def test_helm_chart_templates_ingress_hpa_and_external_secrets() -> None:
+    ingress = read_template("gateway-ingress.yaml")
+    hpa = read_template("gateway-hpa.yaml")
+    secret = read_template("gateway-secret.yaml")
+    helpers = read_template("_helpers.tpl")
+
+    assert "{{- if .Values.gateway.ingress.enabled }}" in ingress
+    assert "kind: Ingress" in ingress
+    assert "tlsSecretName" in ingress
+    assert "{{- if .Values.gateway.autoscaling.enabled }}" in hpa
+    assert "kind: HorizontalPodAutoscaler" in hpa
+    assert "targetCPUUtilizationPercentage" in hpa
+    assert "{{- if not .Values.gateway.existingSecretName }}" in secret
+    assert "mini-llm.gatewaySecretName" in helpers
+    assert "mini-llm.vllmSecretName" in helpers
 
 
 def test_helm_chart_templates_mock_backend_redis_and_prometheus() -> None:

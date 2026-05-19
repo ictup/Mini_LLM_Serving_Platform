@@ -24,6 +24,7 @@ def test_metrics_endpoint_exposes_prometheus_format() -> None:
     assert response.headers["content-type"].startswith("text/plain")
     assert "gateway_http_requests_total" in response.text
     assert "gateway_http_errors_total" in response.text
+    assert "gateway_http_rejections_total" in response.text
     assert "gateway_http_request_duration_seconds" in response.text
 
 
@@ -52,9 +53,14 @@ def test_metrics_count_error_responses() -> None:
     metrics_response = client.get("/metrics")
 
     assert error_response.status_code == 401
+    assert error_response.headers["x-gateway-error-code"] == "invalid_api_key"
     assert (
         'gateway_http_errors_total{method="POST",path="/v1/chat/completions",status_code="401"}'
         in metrics_response.text
+    )
+    assert (
+        'gateway_http_rejections_total{method="POST",path="/v1/chat/completions",'
+        'reason="invalid_api_key",status_code="401"}' in metrics_response.text
     )
 
 

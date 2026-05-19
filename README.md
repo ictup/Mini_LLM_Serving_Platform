@@ -36,6 +36,7 @@ docker compose up --build
 - Request ID propagation with `X-Request-ID`.
 - Redis-backed per-API-key RPM, TPM, and concurrent request limiting.
 - Configurable request body and chat input size limits.
+- Prometheus rejection metrics grouped by stable error reason.
 - Structured JSON logging with `structlog`.
 - Prometheus metrics for request volume, errors, latency, and streaming behavior.
 - Configurable model aliases for stable client-facing names.
@@ -47,7 +48,7 @@ docker compose up --build
 - Optional Docker Compose GPU override for vLLM.
 - Kubernetes no-GPU manifests for Gateway, mock backend, Redis, and Prometheus.
 - Kubernetes GPU overlay for vLLM.
-- Minimal Helm chart for mock and vLLM modes.
+- Minimal Helm chart for mock and vLLM modes, with optional ingress, HPA, and external Secret references.
 - GitHub Actions CI for Python checks and Helm chart validation.
 
 Direct vLLM benchmark comparison is available through the benchmark scripts.
@@ -84,6 +85,7 @@ streaming usage, error responses, and health check behavior.
 
 - `docs/design_decisions.md`: explains the main architecture choices.
 - `docs/failure_analysis.md`: lists common failures and debugging steps.
+- `docs/production_hardening.md`: covers ingress/TLS, secret management, autoscaling, vLLM readiness, and Grafana persistence.
 - `docs/rag_integration.md`: shows how a RAG app can call the Gateway.
 - `docs/project_status.md`: tracks completed capabilities, limitations, and remaining work.
 
@@ -247,6 +249,18 @@ helm template mini-llm deploy/helm \
   --set mockBackend.enabled=false
 ```
 
+Enable production-oriented options as needed:
+
+```bash
+helm upgrade --install mini-llm deploy/helm \
+  --namespace mini-llm-serving \
+  --create-namespace \
+  --set gateway.ingress.enabled=true \
+  --set gateway.ingress.host=llm.example.com \
+  --set gateway.autoscaling.enabled=true \
+  --set gateway.existingSecretName=gateway-secret
+```
+
 The chart is intentionally small. Use it as a deployment skeleton before adding
-production concerns such as ingress, persistent storage, ServiceMonitor CRDs,
-autoscaling, or secret management integration.
+cluster-specific concerns such as ServiceMonitor CRDs, GPU node pools, external
+load balancer policies, and organization-specific secret stores.

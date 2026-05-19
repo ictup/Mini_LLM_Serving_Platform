@@ -26,7 +26,9 @@ spec:
             - configMapRef:
                 name: gateway-config
             - secretRef:
-                name: gateway-secret
+                name: {{ include "mini-llm.gatewaySecretName" . }}
+          resources:
+{{ toYaml .Values.gateway.resources | indent 12 }}
           livenessProbe:
             httpGet:
               path: /health
