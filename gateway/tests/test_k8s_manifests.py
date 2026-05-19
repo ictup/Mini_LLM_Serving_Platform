@@ -88,6 +88,7 @@ def test_gateway_k8s_config_points_to_cluster_services() -> None:
     assert "MOCK_BASE_URL: http://mock-backend:9000/v1" in manifest
     assert "BACKEND_TYPE: mock" in manifest
     assert """MODEL_ALIASES_JSON: '{"mock":"mock","qwen-small":"mock"}'""" in manifest
+    assert """MODEL_ROUTES_JSON: '{}'""" in manifest
 
 
 def test_mock_backend_and_redis_services_have_expected_ports() -> None:
@@ -133,6 +134,7 @@ def test_gpu_gateway_patch_switches_gateway_to_vllm() -> None:
     assert "VLLM_BASE_URL: http://vllm:8000/v1" in manifest
     assert "DEFAULT_MODEL: qwen-small" in manifest
     assert """MODEL_ALIASES_JSON: '{"qwen-small":"Qwen/Qwen2.5-0.5B-Instruct"}'""" in manifest
+    assert """MODEL_ROUTES_JSON: '{}'""" in manifest
     expected_profiles = (
         "RATE_LIMIT_TOKENIZER_PROFILES_JSON: "
         """'{"qwen-small":"qwen2","Qwen/Qwen2.5-0.5B-Instruct":"qwen2"}'"""

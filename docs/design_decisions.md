@@ -15,6 +15,7 @@ usually sit around an inference engine:
 - Rate limiting.
 - Request and input size limits.
 - Stable model aliases.
+- Weighted model routes for canary and fallback targets.
 - Error normalization.
 - User-facing metrics.
 - Rejection reason metrics.

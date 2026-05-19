@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 from gateway.app.core.config import Settings, get_settings
 from gateway.app.main import app
 from gateway.app.proxy.backend_client import BackendClient, BackendClientError
+from gateway.app.proxy.model_aliases import resolve_model_route
 
 client = TestClient(app)
 AUTH_HEADERS = {"Authorization": "Bearer dev-key"}
@@ -116,6 +117,117 @@ def test_gateway_maps_model_alias_for_non_streaming_chat_completion(
     )
 
     assert response.status_code == 200
+    assert response.json()["model"] == "friendly"
+
+
+def test_gateway_routes_non_streaming_chat_completion_with_model_route(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    app.dependency_overrides[get_settings] = lambda: Settings(
+        model_routes_json='{"friendly":{"targets":[{"model":"backend-model","weight":1}]}}'
+    )
+
+    async def fake_create_chat_completion(
+        self: BackendClient,
+        request,
+    ) -> dict:
+        assert request.model == "backend-model"
+        return {
+            "id": "chatcmpl-route-test",
+            "object": "chat.completion",
+            "created": 1,
+            "model": request.model,
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {"role": "assistant", "content": "routed"},
+                    "finish_reason": "stop",
+                }
+            ],
+        }
+
+    monkeypatch.setattr(BackendClient, "create_chat_completion", fake_create_chat_completion)
+
+    response = client.post(
+        "/v1/chat/completions",
+        headers=AUTH_HEADERS,
+        json={
+            "model": "friendly",
+            "messages": [{"role": "user", "content": "hello"}],
+            "stream": False,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["model"] == "friendly"
+
+
+def test_gateway_falls_back_to_next_route_target_on_backend_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    settings = Settings(
+        model_routes_json=(
+            '{"friendly":{"targets":['
+            '{"model":"bad-backend","weight":1},'
+            '{"model":"good-backend","weight":1}'
+            "]}}"
+        )
+    )
+    routing_key = next(
+        f"fallback-key-{index}"
+        for index in range(100)
+        if (
+            resolve_model_route(
+                "friendly",
+                settings,
+                routing_key=f"fallback-key-{index}",
+            ).backend_model
+            == "bad-backend"
+        )
+    )
+    app.dependency_overrides[get_settings] = lambda: settings
+    calls: list[str] = []
+
+    async def fake_create_chat_completion(
+        self: BackendClient,
+        request,
+    ) -> dict:
+        calls.append(request.model)
+        if request.model == "bad-backend":
+            raise BackendClientError(
+                status_code=404,
+                message="model backend rejected the request",
+                error_type="backend_error",
+                code="backend_rejected_request",
+            )
+        return {
+            "id": "chatcmpl-fallback-test",
+            "object": "chat.completion",
+            "created": 1,
+            "model": request.model,
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {"role": "assistant", "content": "fallback"},
+                    "finish_reason": "stop",
+                }
+            ],
+        }
+
+    monkeypatch.setattr(BackendClient, "create_chat_completion", fake_create_chat_completion)
+
+    response = client.post(
+        "/v1/chat/completions",
+        headers={**AUTH_HEADERS, "X-Request-ID": routing_key},
+        json={
+            "model": "friendly",
+            "messages": [{"role": "user", "content": "hello"}],
+            "stream": False,
+        },
+    )
+
+    assert response.status_code == 200
+    assert calls == ["bad-backend", "good-backend"]
     assert response.json()["model"] == "friendly"
 
 

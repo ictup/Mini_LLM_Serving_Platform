@@ -36,6 +36,7 @@ class Settings(BaseSettings):
 
     default_model: str = "mock"
     model_aliases_json: str = '{"mock":"mock"}'
+    model_routes_json: str = "{}"
     metrics_enabled: bool = True
 
     @property

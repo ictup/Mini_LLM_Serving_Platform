@@ -40,6 +40,7 @@ def test_helm_chart_has_expected_metadata_and_values() -> None:
     assert "vllm:" in values
     assert "enabled: false" in values
     assert "Qwen/Qwen2.5-0.5B-Instruct" in values
+    assert "modelRoutesJson: '{}'" in values
 
 
 def test_helm_gateway_template_preserves_health_and_ready_probes() -> None:
@@ -66,6 +67,7 @@ def test_helm_gateway_template_preserves_health_and_ready_probes() -> None:
     assert "MAX_CHAT_MESSAGE_CHARS:" in config
     assert "MAX_CHAT_TOTAL_MESSAGE_CHARS:" in config
     assert "VLLM_BASE_URL: http://vllm:" in config
+    assert "MODEL_ROUTES_JSON:" in config
     assert "API_KEYS:" in secret
     assert "VLLM_API_KEY:" in secret
 

@@ -22,6 +22,7 @@ with more available GPU memory.
 | OpenAI-compatible chat completions | Done | `/v1/chat/completions`, schema tests |
 | Streaming SSE chat completions | Done | streaming proxy tests and SDK smoke test |
 | OpenAI-compatible model list | Done | `/v1/models`, model alias tests |
+| Weighted model routing and fallback | Done | `gateway/app/proxy/model_aliases.py` |
 | Mock backend | Done | `serving/mock_backend/app.py` |
 | API key authentication | Done | `gateway/app/core/security.py` |
 | Request IDs | Done | `gateway/app/core/request_id.py` |
@@ -124,7 +125,7 @@ uv run python benchmark/client_smoke_test.py
 - Kubernetes and Helm assets include basic ingress, TLS, HPA, external Secret,
   and vLLM startup examples. They still do not include ServiceMonitor CRDs,
   cluster-specific GPU autoscaling, organization-specific secret stores,
-  persistent cluster storage, or multi-model routing.
+  persistent cluster storage, or cross-backend GPU-aware routing.
 - Secrets in example manifests are local placeholders and must be replaced
   before any shared or public deployment.
 - Grafana dashboards are provisioned for local experimentation. Long-term

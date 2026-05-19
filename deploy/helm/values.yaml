@@ -25,6 +25,7 @@ gateway:
   service:
     port: 8080
   modelAliasesJson: '{"mock":"mock","qwen-small":"mock"}'
+  modelRoutesJson: '{}'
   resources:
     requests:
       cpu: 100m

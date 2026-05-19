@@ -75,5 +75,7 @@ def test_chat_logging_records_metadata_without_prompt(
         "backend_model": "mock",
         "stream": False,
         "backend_type": "mock",
+        "route_strategy": "alias",
+        "route_attempt": 1,
     }
     assert "SECRET_PROMPT_DO_NOT_LOG" not in str(fake_logger.events)

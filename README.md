@@ -24,6 +24,8 @@ without claiming to be a full enterprise GPU scheduler.
 - Streaming Server-Sent Events proxying with Time To First Token measurement.
 - A backend abstraction that can route to a reproducible no-GPU mock backend or
   a real vLLM OpenAI-compatible server.
+- Optional weighted model routing for canary targets and backend-model
+  fallback.
 - Redis-backed per-key request rate limits, model-aware token-per-minute limits,
   and concurrent request limits.
 - Production-facing concerns around auth, request IDs, structured JSON logs,

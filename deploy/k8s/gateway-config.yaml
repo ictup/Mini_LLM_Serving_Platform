@@ -26,4 +26,5 @@ data:
   MOCK_BASE_URL: http://mock-backend:9000/v1
   DEFAULT_MODEL: mock
   MODEL_ALIASES_JSON: '{"mock":"mock","qwen-small":"mock"}'
+  MODEL_ROUTES_JSON: '{}'
   METRICS_ENABLED: "true"

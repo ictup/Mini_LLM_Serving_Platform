@@ -45,6 +45,23 @@ def test_gateway_lists_configured_model_aliases() -> None:
     }
 
 
+def test_gateway_lists_model_route_aliases() -> None:
+    app.dependency_overrides[get_settings] = lambda: Settings(
+        model_routes_json='{"canary":{"targets":[{"model":"backend-model","weight":1}]}}'
+    )
+
+    response = client.get("/v1/models", headers=AUTH_HEADERS)
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "object": "list",
+        "data": [
+            {"id": "canary", "object": "model", "owned_by": "gateway"},
+            {"id": "mock", "object": "model", "owned_by": "gateway"},
+        ],
+    }
+
+
 def teardown_function() -> None:
     app.dependency_overrides.clear()
     get_settings.cache_clear()

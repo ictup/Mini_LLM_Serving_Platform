@@ -45,6 +45,7 @@ Helm deployments.
 | `STREAMING_TIMEOUT_SECONDS` | No | `300` | Timeout budget for streaming upstream calls. |
 | `DEFAULT_MODEL` | No | `mock` | Model used when a client request omits `model`. |
 | `MODEL_ALIASES_JSON` | No | `{"mock":"mock"}` | JSON object mapping client-facing aliases to backend model ids. |
+| `MODEL_ROUTES_JSON` | No | `{}` | Optional JSON object mapping aliases to weighted backend model targets for canary routing and fallback. |
 | `METRICS_ENABLED` | No | `true` | Enables Prometheus metrics output. |
 
 ## vLLM Runtime Variables
@@ -87,6 +88,23 @@ MODEL_ALIASES_JSON={"qwen-small":"Qwen/Qwen2.5-0.5B-Instruct"}
 ```
 
 This keeps client code stable while allowing the served backend model to change.
+
+## Model Routing
+
+`MODEL_ALIASES_JSON` is the simple one-to-one mapping. `MODEL_ROUTES_JSON`
+adds optional weighted targets for aliases that need canary routing or fallback.
+Routes take precedence over aliases with the same name.
+
+Example:
+
+```env
+MODEL_ROUTES_JSON={"qwen-small":{"strategy":"weighted","targets":[{"model":"Qwen/Qwen2.5-0.5B-Instruct","weight":95},{"model":"Qwen/Qwen2.5-0.5B-Instruct-Canary","weight":5}]}}
+```
+
+The Gateway chooses a target deterministically from the request id, so retries
+for the same request stay stable. If the selected backend target returns a
+fallback-eligible error such as 404, 429, 502, 503, or 504 before streaming
+starts, the Gateway tries the remaining targets.
 
 ## Token Accounting
 
