@@ -1,11 +1,97 @@
-# Mini LLM Serving Platform
+# OpenAI-Compatible LLM Serving Gateway
 
-A production-style OpenAI-compatible LLM serving gateway built step by step from
-the implementation blueprint.
+[![CI](https://github.com/ictup/Mini_LLM_Serving_Platform/actions/workflows/ci.yml/badge.svg)](https://github.com/ictup/Mini_LLM_Serving_Platform/actions/workflows/ci.yml)
+![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-OpenAI--compatible-009688?logo=fastapi&logoColor=white)
+![vLLM](https://img.shields.io/badge/vLLM-GPU%20serving-6A5ACD)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/Kubernetes%20%2B%20Helm-deployment-326CE5?logo=kubernetes&logoColor=white)
 
-## Quick start
+A production-style FastAPI gateway for OpenAI-compatible LLM serving. It sits
+in front of mock or vLLM backends and adds the platform features that are
+normally missing when a model server is exposed directly: API key auth, request
+IDs, model aliases, Redis-backed RPM/TPM/concurrency limits, structured logs,
+Prometheus metrics, Grafana dashboards, Docker Compose, Kubernetes, Helm, and
+direct-backend vs Gateway benchmark reports.
 
-Run the local no-GPU smoke test:
+This is a portfolio infrastructure project. It is intentionally scoped to show
+how an LLM serving layer is designed, operated, benchmarked, and documented,
+without claiming to be a full enterprise GPU scheduler.
+
+## What This Demonstrates
+
+- OpenAI-compatible `/v1/models` and `/v1/chat/completions` APIs.
+- Streaming Server-Sent Events proxying with Time To First Token measurement.
+- A backend abstraction that can route to a reproducible no-GPU mock backend or
+  a real vLLM OpenAI-compatible server.
+- Redis-backed per-key request rate limits, estimated token-per-minute limits,
+  and concurrent request limits.
+- Production-facing concerns around auth, request IDs, structured JSON logs,
+  normalized errors, request size limits, readiness checks, and warmup.
+- Prometheus and Grafana observability for Gateway behavior and vLLM engine
+  metrics.
+- Benchmark tooling for latency, TTFT, inter-token latency, throughput, error
+  rate, and Gateway overhead.
+- Deployment assets for Docker Compose, Kubernetes overlays, and Helm values.
+- CI coverage for Python checks, tests, Helm lint, and Helm rendering.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    Client["OpenAI SDK<br/>curl<br/>OpenAI-compatible client"] --> Gateway["FastAPI Gateway<br/>OpenAI-compatible API"]
+    Gateway --> Platform["Auth<br/>Request ID<br/>Model aliases<br/>Rate limits<br/>Metrics"]
+    Platform --> Router["Backend router"]
+    Router --> Mock["Mock backend<br/>No-GPU demo and CI"]
+    Router --> VLLM["vLLM OpenAI server<br/>CUDA path"]
+    Platform --> Redis["Redis<br/>RPM, TPM, concurrency"]
+    Platform --> Prometheus["Prometheus"]
+    Prometheus --> Grafana["Grafana dashboards"]
+```
+
+The important design choice is the Gateway. vLLM handles model execution. The
+Gateway owns the stable client contract and platform behavior around it.
+
+## Verified State
+
+| Area | Status |
+| --- | --- |
+| No-GPU local path | Verified with mock backend and SDK smoke test |
+| GPU path | Verified locally with Docker Desktop and NVIDIA GPU |
+| CI | Python lint, tests, Helm lint, Helm template rendering |
+| Kubernetes | Base and GPU overlays render with Kustomize |
+| Helm | Mock and vLLM modes render successfully |
+| External RAG app wiring | Intentionally excluded from this completion |
+
+GPU validation snapshot from May 19, 2026:
+
+| Item | Value |
+| --- | --- |
+| GPU | NVIDIA GeForce RTX 4060 Laptop GPU, 8GB VRAM |
+| vLLM image | `vllm/vllm-openai:v0.8.5.post1` |
+| Served model | `Qwen/Qwen2.5-0.5B-Instruct` |
+| Gateway alias | `qwen-small` |
+| Result | Direct vLLM and Gateway streaming benchmarks completed with zero errors |
+
+Full details are in
+[docs/gateway_overhead_report.md](docs/gateway_overhead_report.md).
+
+## Benchmark Snapshot
+
+Small local streaming benchmark, useful for demonstrating the measurement
+pipeline rather than production capacity planning:
+
+| Concurrency | Direct RPS | Gateway RPS | Direct P95 Latency | Gateway P95 Latency | Gateway P50 TTFT |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | 2.25 | 2.25 | 585.91 ms | 587.33 ms | 52.14 ms |
+| 2 | 3.92 | 3.81 | 625.46 ms | 605.28 ms | 49.24 ms |
+
+The report generator compares direct backend calls against Gateway-routed calls
+using the same prompt set, concurrency levels, stream mode, and token limits.
+
+## Quick Start: No GPU
+
+The mock backend makes the platform reproducible on a laptop and in CI.
 
 ```bash
 uv sync --frozen --all-groups
@@ -19,166 +105,68 @@ uv run ruff check .
 uv run pytest
 ```
 
-Start the Docker no-GPU stack:
+Start the full local stack:
 
 ```bash
 docker compose up --build
 ```
 
-## Implemented capabilities
+Local services:
 
-- FastAPI Gateway with `GET /health`, `GET /ready`, `GET /metrics`, `GET /v1/models`, and `POST /v1/chat/completions`.
-- OpenAI-compatible chat completion schemas for non-streaming and streaming requests.
-- Mock OpenAI-compatible backend for reproducible no-GPU development and CI.
-- Gateway proxying to mock or vLLM backends.
-- Streaming SSE proxy with client-facing model alias rewriting.
-- Bearer API key authentication.
-- Request ID propagation with `X-Request-ID`.
-- Redis-backed per-API-key RPM, TPM, and concurrent request limiting.
-- Configurable request body and chat input size limits.
-- Prometheus rejection metrics grouped by stable error reason.
-- Structured JSON logging with `structlog`.
-- Prometheus metrics for request volume, errors, latency, and streaming behavior.
-- Configurable model aliases for stable client-facing names.
-- OpenAI Python SDK smoke test for non-streaming and streaming completions.
-- Local end-to-end smoke runner for mock backend plus Gateway.
-- Async benchmark runner with latency, throughput, error rate, TTFT, and ITL metrics.
-- Markdown benchmark report generator and direct-vs-Gateway comparison tool.
-- Docker Compose no-GPU stack with Gateway, mock backend, Redis, Prometheus, and Grafana.
-- Optional Docker Compose GPU override for vLLM.
-- Kubernetes no-GPU manifests for Gateway, mock backend, Redis, and Prometheus.
-- Kubernetes GPU overlay for vLLM.
-- Minimal Helm chart for mock and vLLM modes, with optional ingress, HPA, and external Secret references.
-- GitHub Actions CI for Python checks and Helm chart validation.
+| Service | URL |
+| --- | --- |
+| Gateway | http://localhost:8080 |
+| Mock backend | http://localhost:9000 |
+| Prometheus | http://localhost:9090 |
+| Grafana | http://localhost:3000 |
+| Redis | `localhost:6379` |
 
-Direct vLLM benchmark comparison is available through the benchmark scripts.
-The current local GPU comparison is documented in
-`docs/gateway_overhead_report.md`.
+Grafana login defaults to `admin` / `admin`.
 
-See `docs/project_status.md` for the acceptance checklist, validation commands,
-known limitations, and intentionally excluded scope.
+## Quick Start: GPU vLLM
 
-## Continuous integration
+Use the GPU override when Docker can access an NVIDIA runtime:
 
-The repository includes a GitHub Actions workflow at
-`.github/workflows/ci.yml`. It runs on pushes to `main` and on pull requests.
-
-Checks:
-
-- `uv sync --frozen --all-groups`
-- `uv run ruff check .`
-- `uv run pytest`
-- `helm lint deploy/helm`
-- Helm template rendering for both the default mock stack and the optional vLLM stack
-
-## Configuration
-
-Copy `.env.example` to `.env` for local process development. For Docker,
-Kubernetes, and Helm deployments, see the configuration matrix in
-`docs/configuration.md`.
-
-## API usage
-
-The Gateway exposes OpenAI-compatible `/v1/models` and `/v1/chat/completions`
-endpoints. See `docs/api_usage.md` for curl examples, Python SDK examples,
-streaming usage, error responses, and health check behavior.
-
-## Design and operations docs
-
-- `docs/design_decisions.md`: explains the main architecture choices.
-- `docs/failure_analysis.md`: lists common failures and debugging steps.
-- `docs/production_hardening.md`: covers ingress/TLS, secret management, autoscaling, vLLM readiness, and Grafana persistence.
-- `docs/gateway_overhead_report.md`: summarizes the local direct-vLLM vs Gateway benchmark.
-- `docs/portfolio_summary.md`: provides the final project pitch, demo flow, and CV bullets.
-- `docs/rag_integration.md`: shows how a RAG app can call the Gateway.
-- `docs/project_status.md`: tracks completed capabilities, limitations, and excluded scope.
-
-## Local end-to-end smoke test
-
-Run a full local mock stack and SDK smoke test with one command:
-
-```bash
-make local-e2e
-```
-
-Or run the script directly:
-
-```bash
-uv run python scripts/local_e2e.py
-```
-
-This starts the mock backend, starts the Gateway in mock mode, waits for
-readiness, runs `benchmark/client_smoke_test.py`, and then stops both services.
-
-## Docker Compose no-GPU stack
-
-Start the local reproducible stack:
-
-```bash
-docker compose up --build
-```
-
-Services:
-
-- Gateway: http://localhost:8080
-- Mock backend: http://localhost:9000
-- Prometheus: http://localhost:9090
-- Grafana: http://localhost:3000, login `admin` / `admin`
-- Redis: localhost:6379
-
-Grafana automatically loads the `Gateway Overview` dashboard from
-`monitoring/grafana/dashboards/gateway-overview.json`. The dashboard includes
-HTTP request rate, error rate, latency, streaming TTFT, streaming duration, and
-streaming output chunk rate.
-
-Smoke test through the Gateway:
-
-```bash
-uv run python benchmark/client_smoke_test.py
-```
-
-Stop the stack:
-
-```bash
-docker compose down
-```
-
-## Docker Compose GPU stack
-
-When a CUDA-capable Docker runtime is available, run the vLLM override:
-
-```bash
+```powershell
+$env:VLLM_MODEL="Qwen/Qwen2.5-0.5B-Instruct"
+$env:VLLM_IMAGE_TAG="v0.8.5.post1"
 docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build
 ```
 
-Important environment variables:
+Warm up the Gateway and run an OpenAI SDK smoke test:
 
-- `VLLM_MODEL`: model served by vLLM, default `Qwen/Qwen2.5-0.5B-Instruct`
-- `VLLM_IMAGE_TAG`: vLLM Docker image tag, default `v0.8.5.post1`
-- `VLLM_API_KEY`: internal Gateway-to-vLLM API key, default `local-vllm-key`
-- `HUGGING_FACE_HUB_TOKEN`: required only for gated Hugging Face models
-- `VLLM_DTYPE`: vLLM dtype setting, default `float16`
-- `VLLM_MAX_MODEL_LEN`: maximum model context length, default `4096`
-- `VLLM_GPU_MEMORY_UTILIZATION`: vLLM GPU memory target, default `0.75`
-- `VLLM_SWAP_SPACE`: vLLM CPU swap space in GiB, default `1`
-- `VLLM_USE_V1`: vLLM engine switch, default `0` for local Docker compatibility
+```powershell
+uv run python scripts/warmup_gateway.py --model qwen-small
 
-In GPU mode, Gateway uses `BACKEND_TYPE=vllm` and routes the client-facing
-`qwen-small` alias to `VLLM_MODEL`.
+$env:OPENAI_BASE_URL="http://localhost:8080/v1"
+$env:OPENAI_API_KEY="dev-key"
+$env:LLM_MODEL="qwen-small"
+uv run python benchmark/client_smoke_test.py
+```
 
-The repository defaults to `Qwen/Qwen2.5-0.5B-Instruct` because it has been
-validated on an 8GB RTX 4060 Laptop GPU. Larger models such as
-`Qwen/Qwen2.5-1.5B-Instruct` can be selected by overriding `VLLM_MODEL` on
+The default GPU model is intentionally small because it has been validated on
+an 8GB laptop GPU. Larger models can be selected by overriding `VLLM_MODEL` on
 machines with enough free GPU memory.
 
-GPU mode also switches Prometheus to `monitoring/prometheus/prometheus.gpu.yml`,
-which scrapes both Gateway and vLLM. Grafana automatically loads a separate
-`vLLM Engine Overview` dashboard for scheduler state, KV cache usage, TTFT,
-E2E latency, inter-token latency, and token throughput.
+## API Example
 
-## Direct vLLM vs Gateway benchmark
+```bash
+curl http://localhost:8080/v1/chat/completions \
+  -H "Authorization: Bearer dev-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "mock",
+    "messages": [{"role": "user", "content": "Explain TTFT in one sentence."}],
+    "stream": false
+  }'
+```
 
-Run the same prompt set against vLLM directly and through the Gateway:
+For streaming examples, model listing, error shapes, and health checks, see
+[docs/api_usage.md](docs/api_usage.md).
+
+## Run Direct vs Gateway Benchmarks
+
+Run direct vLLM:
 
 ```bash
 uv run python benchmark/run_benchmark.py \
@@ -190,7 +178,11 @@ uv run python benchmark/run_benchmark.py \
   --requests-per-level 5 \
   --max-tokens 64 \
   --stream true
+```
 
+Run through the Gateway:
+
+```bash
 uv run python benchmark/run_benchmark.py \
   --base-url http://localhost:8080/v1 \
   --api-key dev-key \
@@ -202,7 +194,7 @@ uv run python benchmark/run_benchmark.py \
   --stream true
 ```
 
-Generate the overhead report from the two result JSON files:
+Generate the comparison report:
 
 ```bash
 uv run python benchmark/compare_results.py \
@@ -211,72 +203,60 @@ uv run python benchmark/compare_results.py \
   --output docs/gateway_overhead_report.md
 ```
 
-## Kubernetes no-GPU manifests
+## Deployment Paths
 
-The minimal Kubernetes manifests live in `deploy/k8s` and cover Gateway, mock
-backend, Redis, and Prometheus. They use the local image name
-`mini-llm-serving-platform:local`, so build and load that image into your local
-cluster before applying the manifests.
+| Target | Entry point | Purpose |
+| --- | --- | --- |
+| Docker Compose, no GPU | `docker-compose.yml` | Reproducible local demo |
+| Docker Compose, vLLM | `docker-compose.gpu.yml` | Local CUDA-backed serving |
+| Kubernetes base | `deploy/k8s` | Gateway, mock backend, Redis, Prometheus |
+| Kubernetes GPU overlay | `deploy/k8s-gpu` | Adds vLLM and vLLM metrics scraping |
+| Helm | `deploy/helm` | Parameterized deployment skeleton |
 
-```bash
-kubectl apply -k deploy/k8s
-kubectl -n mini-llm-serving port-forward svc/gateway 8080:8080
-kubectl -n mini-llm-serving port-forward svc/prometheus 9090:9090
-```
-
-Remove the stack:
+Validate manifests:
 
 ```bash
-kubectl delete -k deploy/k8s
-```
+kubectl kustomize deploy/k8s
+kubectl kustomize deploy/k8s-gpu
 
-## Kubernetes GPU overlay
-
-The GPU overlay in `deploy/k8s-gpu` reuses the no-GPU base and adds vLLM. It
-patches Gateway to use `BACKEND_TYPE=vllm`, routes `qwen-small` to
-`Qwen/Qwen2.5-0.5B-Instruct`, and patches Prometheus to scrape `vllm:8000`.
-
-```bash
-kubectl apply -k deploy/k8s-gpu
-kubectl -n mini-llm-serving port-forward svc/gateway 8080:8080
-kubectl -n mini-llm-serving port-forward svc/vllm 8000:8000
-```
-
-The vLLM deployment requests one NVIDIA GPU with `nvidia.com/gpu: "1"`. Replace
-the example `local-vllm-key` and optional Hugging Face token Secret values
-before using this outside local experiments.
-
-## Helm chart
-
-The minimal Helm chart lives in `deploy/helm`. By default it deploys the same
-no-GPU stack as `deploy/k8s`: Gateway, mock backend, Redis, and Prometheus.
-
-```bash
+helm lint deploy/helm
 helm template mini-llm deploy/helm --namespace mini-llm-serving
-helm upgrade --install mini-llm deploy/helm --namespace mini-llm-serving --create-namespace
-```
-
-Enable vLLM with values:
-
-```bash
 helm template mini-llm deploy/helm \
   --namespace mini-llm-serving \
   --set vllm.enabled=true \
   --set mockBackend.enabled=false
 ```
 
-Enable production-oriented options as needed:
+## Repository Guide
 
-```bash
-helm upgrade --install mini-llm deploy/helm \
-  --namespace mini-llm-serving \
-  --create-namespace \
-  --set gateway.ingress.enabled=true \
-  --set gateway.ingress.host=llm.example.com \
-  --set gateway.autoscaling.enabled=true \
-  --set gateway.existingSecretName=gateway-secret
-```
+| Path | Purpose |
+| --- | --- |
+| `gateway/app` | FastAPI Gateway, auth, rate limiting, proxying, metrics |
+| `serving/mock_backend` | OpenAI-compatible mock backend |
+| `benchmark` | SDK smoke tests, async benchmark runner, report tools |
+| `monitoring` | Prometheus config and Grafana dashboards |
+| `deploy/k8s` | No-GPU Kubernetes manifests |
+| `deploy/k8s-gpu` | vLLM Kubernetes overlay |
+| `deploy/helm` | Helm chart for mock and vLLM modes |
+| `docs` | API, configuration, design decisions, operations, reports |
 
-The chart is intentionally small. Use it as a deployment skeleton before adding
-cluster-specific concerns such as ServiceMonitor CRDs, GPU node pools, external
-load balancer policies, and organization-specific secret stores.
+## Documentation
+
+- [API usage](docs/api_usage.md)
+- [Configuration matrix](docs/configuration.md)
+- [Design decisions](docs/design_decisions.md)
+- [Failure analysis](docs/failure_analysis.md)
+- [Production hardening notes](docs/production_hardening.md)
+- [Gateway overhead report](docs/gateway_overhead_report.md)
+- [Project status and acceptance checklist](docs/project_status.md)
+- [Portfolio summary](docs/portfolio_summary.md)
+- [RAG integration guide](docs/rag_integration.md)
+- [Recommended GitHub repository metadata](docs/repository_metadata.md)
+
+## Design Boundaries
+
+This repository is production-style, not a complete enterprise inference
+platform. It does not implement multi-tenant billing, GPU cluster scheduling,
+LoRA adapter routing, incident response, organization identity integration, or
+full SLA/SLO management. Those are deliberately documented as boundaries so the
+implemented platform remains focused and reproducible.
