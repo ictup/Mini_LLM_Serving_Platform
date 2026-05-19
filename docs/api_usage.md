@@ -262,7 +262,8 @@ the backend-derived status code and error code.
 
 Rate limits return `429`. Request-per-minute limits use
 `code=rate_limit_exceeded`; estimated token-per-minute limits use
-`code=token_rate_limit_exceeded`.
+`code=token_rate_limit_exceeded`; in-flight request limits use
+`code=concurrent_request_limit_exceeded`.
 
 ## Metrics
 

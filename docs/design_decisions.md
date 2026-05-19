@@ -78,9 +78,10 @@ would pass local tests but break when multiple replicas are deployed. Redis
 provides a shared counter store that works locally, in Docker Compose, and in
 Kubernetes.
 
-The current implementation enforces both request-per-minute and estimated
-token-per-minute limits. Concurrent-request limits are still listed as future
-production hardening work.
+The current implementation enforces request-per-minute, estimated
+token-per-minute, and concurrent in-flight request limits. Concurrent limits are
+released when non-streaming calls finish or when streaming responses finish
+iterating.
 
 ## Why Prometheus and Grafana?
 

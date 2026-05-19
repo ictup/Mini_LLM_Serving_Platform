@@ -34,7 +34,7 @@ docker compose up --build
 - Streaming SSE proxy with client-facing model alias rewriting.
 - Bearer API key authentication.
 - Request ID propagation with `X-Request-ID`.
-- Redis-backed per-API-key RPM and TPM rate limiting.
+- Redis-backed per-API-key RPM, TPM, and concurrent request limiting.
 - Structured JSON logging with `structlog`.
 - Prometheus metrics for request volume, errors, latency, and streaming behavior.
 - Configurable model aliases for stable client-facing names.

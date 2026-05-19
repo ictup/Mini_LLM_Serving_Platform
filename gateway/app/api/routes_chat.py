@@ -28,74 +28,85 @@ async def create_chat_completion(
     api_key: APIKeyDependency,
 ) -> dict | JSONResponse | StreamingResponse:
     request_id = get_request_id(raw_request)
-    await enforce_chat_rate_limit(settings=settings, api_key=api_key, request=request)
-
-    try:
-        backend_model = resolve_model_alias(request.model, settings)
-    except ModelAliasError as exc:
-        error = ErrorResponse(
-            error=ErrorDetail(
-                message=f"model not found: {exc.model}",
-                type="invalid_request_error",
-                code="model_not_found",
-            ),
-            request_id=request_id,
-        )
-        return JSONResponse(status_code=400, content=error.model_dump())
-
-    logger.info(
-        "chat_completion_request",
-        request_id=request_id,
-        model=request.model,
-        backend_model=backend_model,
-        stream=request.stream,
-        backend_type=settings.backend_type,
+    rate_limit_lease = await enforce_chat_rate_limit(
+        settings=settings,
+        api_key=api_key,
+        request=request,
     )
+    stream_owns_rate_limit_lease = False
 
-    client = BackendClient(settings)
-    backend_request = request.model_copy(update={"model": backend_model})
     try:
-        if request.stream:
-            backend_stream = await client.open_chat_completion_stream(backend_request)
-            client_stream = rewrite_sse_model_events(
-                backend_stream.aiter_text(),
-                backend_model=backend_model,
-                client_model=request.model,
-            )
-            return StreamingResponse(
-                observe_streaming_chunks(
-                    client_stream,
-                    client_model=request.model,
-                    backend_model=backend_model,
-                    metrics_enabled=settings.metrics_enabled,
+        try:
+            backend_model = resolve_model_alias(request.model, settings)
+        except ModelAliasError as exc:
+            error = ErrorResponse(
+                error=ErrorDetail(
+                    message=f"model not found: {exc.model}",
+                    type="invalid_request_error",
+                    code="model_not_found",
                 ),
-                media_type="text/event-stream",
-                headers={
-                    "Cache-Control": "no-cache",
-                    "X-Accel-Buffering": "no",
-                },
+                request_id=request_id,
             )
+            return JSONResponse(status_code=400, content=error.model_dump())
 
-        response = await client.create_chat_completion(backend_request)
-        response["model"] = request.model
-        return response
-    except BackendClientError as exc:
-        logger.warning(
-            "chat_completion_backend_error",
+        logger.info(
+            "chat_completion_request",
             request_id=request_id,
             model=request.model,
             backend_model=backend_model,
             stream=request.stream,
             backend_type=settings.backend_type,
-            status_code=exc.status_code,
-            error_code=exc.code,
         )
-        error = ErrorResponse(
-            error=ErrorDetail(
-                message=exc.message,
-                type=exc.error_type,
-                code=exc.code,
-            ),
-            request_id=request_id,
-        )
-        return JSONResponse(status_code=exc.status_code, content=error.model_dump())
+
+        client = BackendClient(settings)
+        backend_request = request.model_copy(update={"model": backend_model})
+        try:
+            if request.stream:
+                backend_stream = await client.open_chat_completion_stream(backend_request)
+                client_stream = rewrite_sse_model_events(
+                    backend_stream.aiter_text(),
+                    backend_model=backend_model,
+                    client_model=request.model,
+                )
+                observed_stream = observe_streaming_chunks(
+                    client_stream,
+                    client_model=request.model,
+                    backend_model=backend_model,
+                    metrics_enabled=settings.metrics_enabled,
+                )
+                stream_owns_rate_limit_lease = True
+                return StreamingResponse(
+                    rate_limit_lease.wrap_stream(observed_stream),
+                    media_type="text/event-stream",
+                    headers={
+                        "Cache-Control": "no-cache",
+                        "X-Accel-Buffering": "no",
+                    },
+                )
+
+            response = await client.create_chat_completion(backend_request)
+            response["model"] = request.model
+            return response
+        except BackendClientError as exc:
+            logger.warning(
+                "chat_completion_backend_error",
+                request_id=request_id,
+                model=request.model,
+                backend_model=backend_model,
+                stream=request.stream,
+                backend_type=settings.backend_type,
+                status_code=exc.status_code,
+                error_code=exc.code,
+            )
+            error = ErrorResponse(
+                error=ErrorDetail(
+                    message=exc.message,
+                    type=exc.error_type,
+                    code=exc.code,
+                ),
+                request_id=request_id,
+            )
+            return JSONResponse(status_code=exc.status_code, content=error.model_dump())
+    finally:
+        if not stream_owns_rate_limit_lease:
+            await rate_limit_lease.release()

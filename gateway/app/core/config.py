@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     rate_limit_enabled: bool = False
     rate_limit_rpm: int = Field(default=60, gt=0)
     rate_limit_tpm: int = Field(default=60_000, gt=0)
+    rate_limit_concurrent_requests: int = Field(default=20, gt=0)
     rate_limit_default_completion_tokens: int = Field(default=256, gt=0)
     redis_url: str = "redis://localhost:6379/0"
 

@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 
 from gateway.app.core.config import Settings, get_settings
 from gateway.app.core.rate_limit import (
+    RATE_LIMIT_CONCURRENT_KEY_PREFIX,
     RATE_LIMIT_RPM_KEY_PREFIX,
     RATE_LIMIT_TPM_KEY_PREFIX,
     RateLimiter,
@@ -17,6 +18,12 @@ client = TestClient(app)
 AUTH_HEADERS = {"Authorization": "Bearer dev-key"}
 
 
+class FakeRateLimitBackendStream:
+    async def aiter_text(self):
+        yield 'data: {"choices":[{"delta":{"content":"hello"}}]}\n\n'
+        yield "data: [DONE]\n\n"
+
+
 class FakeRedis:
     def __init__(self) -> None:
         self.counts: dict[str, int] = {}
@@ -28,6 +35,10 @@ class FakeRedis:
 
     async def incrby(self, name: str, amount: int) -> int:
         self.counts[name] = self.counts.get(name, 0) + amount
+        return self.counts[name]
+
+    async def decr(self, name: str) -> int:
+        self.counts[name] = self.counts.get(name, 0) - 1
         return self.counts[name]
 
     async def expire(self, name: str, time: int) -> None:
@@ -68,12 +79,14 @@ def enable_rate_limit(
     fake_redis: FakeRedis,
     rpm: int,
     tpm: int = 1_000,
+    concurrent_requests: int = 20,
     default_completion_tokens: int = 1,
 ) -> None:
     app.dependency_overrides[get_settings] = lambda: Settings(
         rate_limit_enabled=True,
         rate_limit_rpm=rpm,
         rate_limit_tpm=tpm,
+        rate_limit_concurrent_requests=concurrent_requests,
         rate_limit_default_completion_tokens=default_completion_tokens,
     )
 
@@ -165,6 +178,9 @@ def test_rate_limit_redis_key_hashes_api_key(
     redis_keys = list(fake_redis.counts)
     assert any(redis_key.startswith(f"{RATE_LIMIT_RPM_KEY_PREFIX}:") for redis_key in redis_keys)
     assert any(redis_key.startswith(f"{RATE_LIMIT_TPM_KEY_PREFIX}:") for redis_key in redis_keys)
+    assert any(
+        redis_key.startswith(f"{RATE_LIMIT_CONCURRENT_KEY_PREFIX}:") for redis_key in redis_keys
+    )
     assert all("dev-key" not in redis_key for redis_key in redis_keys)
 
 
@@ -247,6 +263,105 @@ def test_token_rate_limit_accumulates_tokens_per_api_key(
     assert second.status_code == 200
     assert third.status_code == 429
     assert third.json()["error"]["code"] == "token_rate_limit_exceeded"
+
+
+def test_concurrent_request_limit_releases_after_non_streaming_request(
+    monkeypatch: pytest.MonkeyPatch,
+    fake_redis: FakeRedis,
+) -> None:
+    enable_rate_limit(monkeypatch, fake_redis, rpm=10, concurrent_requests=1)
+
+    response = client.post(
+        "/v1/chat/completions",
+        headers=AUTH_HEADERS,
+        json={
+            "model": "mock",
+            "messages": [{"role": "user", "content": "hello"}],
+            "stream": False,
+        },
+    )
+
+    concurrent_key = RateLimiter(fake_redis)._stable_redis_key(
+        "dev-key",
+        RATE_LIMIT_CONCURRENT_KEY_PREFIX,
+    )
+
+    assert response.status_code == 200
+    assert fake_redis.counts[concurrent_key] == 0
+
+
+def test_concurrent_request_limit_blocks_requests_over_limit(
+    monkeypatch: pytest.MonkeyPatch,
+    fake_redis: FakeRedis,
+) -> None:
+    enable_rate_limit(monkeypatch, fake_redis, rpm=10, concurrent_requests=1)
+    concurrent_key = RateLimiter(fake_redis)._stable_redis_key(
+        "dev-key",
+        RATE_LIMIT_CONCURRENT_KEY_PREFIX,
+    )
+    fake_redis.counts[concurrent_key] = 1
+
+    response = client.post(
+        "/v1/chat/completions",
+        headers={**AUTH_HEADERS, "X-Request-ID": "concurrent-limit-req-123"},
+        json={
+            "model": "mock",
+            "messages": [{"role": "user", "content": "hello"}],
+            "stream": False,
+        },
+    )
+
+    assert response.status_code == 429
+    assert fake_redis.counts[concurrent_key] == 1
+    assert response.json() == {
+        "error": {
+            "message": "concurrent request limit exceeded",
+            "type": "rate_limit_error",
+            "code": "concurrent_request_limit_exceeded",
+            "param": None,
+        },
+        "request_id": "concurrent-limit-req-123",
+    }
+
+
+def test_concurrent_request_limit_releases_after_streaming_response(
+    monkeypatch: pytest.MonkeyPatch,
+    fake_redis: FakeRedis,
+) -> None:
+    enable_rate_limit(monkeypatch, fake_redis, rpm=10, concurrent_requests=1)
+
+    async def fake_open_chat_completion_stream(
+        self: BackendClient,
+        request,
+    ) -> FakeRateLimitBackendStream:
+        return FakeRateLimitBackendStream()
+
+    monkeypatch.setattr(
+        BackendClient,
+        "open_chat_completion_stream",
+        fake_open_chat_completion_stream,
+    )
+
+    with client.stream(
+        "POST",
+        "/v1/chat/completions",
+        headers=AUTH_HEADERS,
+        json={
+            "model": "mock",
+            "messages": [{"role": "user", "content": "hello"}],
+            "stream": True,
+        },
+    ) as response:
+        body = response.read().decode()
+
+    concurrent_key = RateLimiter(fake_redis)._stable_redis_key(
+        "dev-key",
+        RATE_LIMIT_CONCURRENT_KEY_PREFIX,
+    )
+
+    assert response.status_code == 200
+    assert "hello" in body
+    assert fake_redis.counts[concurrent_key] == 0
 
 
 def teardown_function() -> None:

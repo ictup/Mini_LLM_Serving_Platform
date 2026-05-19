@@ -12,6 +12,7 @@ data:
   RATE_LIMIT_ENABLED: {{ .Values.gateway.rateLimit.enabled | quote }}
   RATE_LIMIT_RPM: {{ .Values.gateway.rateLimit.rpm | quote }}
   RATE_LIMIT_TPM: {{ .Values.gateway.rateLimit.tpm | quote }}
+  RATE_LIMIT_CONCURRENT_REQUESTS: {{ .Values.gateway.rateLimit.concurrentRequests | quote }}
   RATE_LIMIT_DEFAULT_COMPLETION_TOKENS: {{ .Values.gateway.rateLimit.defaultCompletionTokens | quote }}
   REDIS_URL: redis://redis:{{ .Values.redis.service.port }}/0
   METRICS_ENABLED: "true"

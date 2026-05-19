@@ -189,6 +189,7 @@ Likely causes:
 - Redis still contains counters from a previous run.
 - `RATE_LIMIT_RPM` is too low for benchmark concurrency.
 - `RATE_LIMIT_TPM` is too low for long prompts or high `max_tokens`.
+- `RATE_LIMIT_CONCURRENT_REQUESTS` is too low for long-running streaming calls.
 - Requests omit `max_tokens`, so the Gateway reserves
   `RATE_LIMIT_DEFAULT_COMPLETION_TOKENS`.
 - Clock or key naming assumptions differ between environments.
@@ -205,6 +206,7 @@ Fixes:
 - Use separate API keys for separate clients or tests.
 - Increase `RATE_LIMIT_RPM` for benchmark runs.
 - Increase `RATE_LIMIT_TPM` for long-context workloads.
+- Increase `RATE_LIMIT_CONCURRENT_REQUESTS` for expected streaming concurrency.
 - Set realistic `max_tokens` values in clients so the reserved output budget is
   not overly conservative.
 - Flush local Redis only in development if stale counters are suspected.
