@@ -9,12 +9,12 @@ Helm deployments.
 | Environment | Primary source | Purpose |
 | --- | --- | --- |
 | Local processes | `.env` copied from `.env.example` | Developer defaults for `uvicorn` and benchmark scripts |
-| Docker no-GPU | `docker-compose.yml` | Gateway, mock backend, Redis, Prometheus, and Grafana |
+| Docker no-GPU | `docker-compose.yml` | Gateway, mock backend, Redis, Prometheus, alert rules, and Grafana |
 | Docker GPU | `docker-compose.gpu.yml` plus shell environment | Overrides Gateway to use vLLM and starts the vLLM container |
 | Kubernetes no-GPU | `deploy/k8s/gateway-config.yaml` and `deploy/k8s/gateway-secret.yaml` | Static manifests for the mock stack |
 | Kubernetes GPU | `deploy/k8s-gpu/*` patches and vLLM manifests | Adds vLLM and rewires Gateway to the vLLM service |
 | Helm | `deploy/helm/values.yaml` | Parameterized Kubernetes deployment for mock or vLLM mode |
-| Production hardening | `docs/production_hardening.md` | Ingress/TLS, external Secrets, HPA, warmup, and Grafana persistence |
+| Production hardening | `docs/production_hardening.md` | Ingress/TLS, external Secrets, HPA, warmup, alerting, and Grafana persistence |
 | Gateway defaults | `gateway/app/core/config.py` | Last-resort defaults when no environment value is supplied |
 
 ## Gateway Runtime Variables
@@ -156,6 +156,24 @@ helm upgrade --install mini-llm deploy/helm \
   --set gateway.existingSecretName=gateway-secret \
   --set vllm.existingSecretName=vllm-secret
 ```
+
+## Prometheus Alerting
+
+Prometheus loads alert rules from `monitoring/prometheus/alerts.yml` in Docker
+Compose and from the `alerts.yml` ConfigMap entry in Kubernetes and Helm.
+
+The included rules are intentionally SLO-oriented rather than exhaustive:
+
+- Gateway high error ratio.
+- Gateway high p95 request latency.
+- Gateway high streaming p95 TTFT.
+- Gateway elevated rejection rate.
+- vLLM queued waiting requests.
+- vLLM high KV cache usage.
+- vLLM high p95 TTFT.
+
+Helm keeps alerting enabled by default and exposes thresholds under
+`prometheus.alerting` in `deploy/helm/values.yaml`.
 
 ## Backend Mode Checklist
 

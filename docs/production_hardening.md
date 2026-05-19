@@ -132,6 +132,29 @@ Operational workflow:
 - Prefer adding panels with bounded labels such as `path`, `status_code`,
   `reason`, `model`, and `backend_model`.
 
+## Prometheus Alert Rules
+
+The local and Kubernetes Prometheus configurations load
+`/etc/prometheus/alerts.yml`. The source rule file for Docker Compose is
+`monitoring/prometheus/alerts.yml`; the static Kubernetes and Helm paths render
+the same alert groups into the `prometheus-config` ConfigMap.
+
+Included alerts cover:
+
+- `GatewayHighErrorRate`: Gateway error ratio above 5% for 5 minutes.
+- `GatewayHighP95Latency`: Gateway p95 request latency above 2 seconds.
+- `GatewayHighP95TTFT`: streaming TTFT above 750 ms.
+- `GatewayHighRejectionRate`: sustained auth/rate-limit/request validation
+  rejections.
+- `VLLMWaitingRequests`: vLLM has queued requests for 5 minutes.
+- `VLLMHighKVCacheUsage`: vLLM KV cache pressure above 85%.
+- `VLLMHighP95TTFT`: vLLM engine TTFT above 1 second.
+
+These rules are warning-level defaults for local and portfolio validation. In a
+shared environment, connect Prometheus to Alertmanager or your managed
+notification path, then tune thresholds against measured traffic and GPU
+capacity.
+
 ## Final Production Checklist
 
 - Replace all placeholder API keys and tokens.
@@ -141,4 +164,6 @@ Operational workflow:
 - Run Gateway warmup before benchmark collection.
 - Check Grafana panels for request rate, latency, streaming behavior, and
   rejection reasons.
+- Confirm Prometheus alert rules are loaded and route notifications through the
+  environment's Alertmanager or managed alerting service.
 - Generate a direct-vs-Gateway benchmark report from real GPU runs.

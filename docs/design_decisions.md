@@ -119,6 +119,12 @@ The Gateway metrics answer client-facing questions:
 Grafana turns those metrics into an operational dashboard that can be checked
 while running smoke tests or benchmarks.
 
+Prometheus alert rules are kept beside the scrape configuration so local Docker,
+static Kubernetes, and Helm deployments share the same operational signals. The
+rules focus on symptoms that matter for LLM serving: Gateway error ratio,
+request latency, streaming TTFT, rejection rate, vLLM waiting requests, KV cache
+pressure, and vLLM TTFT.
+
 Error responses also emit `gateway_http_rejections_total` with a bounded
 `reason` label derived from Gateway error codes. This is more actionable than
 only looking at status codes while still avoiding high-cardinality labels.

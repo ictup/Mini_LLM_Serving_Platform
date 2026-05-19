@@ -64,6 +64,18 @@ prometheus:
   enabled: true
   image: prom/prometheus:v2.55.1
   scrapeInterval: 5s
+  evaluationInterval: 30s
+  alerting:
+    enabled: true
+    window: 5m
+    for: 5m
+    gatewayHighErrorRatio: 0.05
+    gatewayHighLatencySeconds: 2
+    gatewayHighTtftSeconds: 0.75
+    gatewayRejectionRateRps: 0.5
+    vllmWaitingRequests: 0
+    vllmKvCacheUsagePercent: 85
+    vllmHighTtftSeconds: 1
   service:
     port: 9090
 

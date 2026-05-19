@@ -33,6 +33,7 @@ with more available GPU memory.
 | Prometheus metrics | Done | `gateway/app/observability/metrics.py` |
 | Rejection reason metrics | Done | `gateway_http_rejections_total` |
 | Grafana dashboards | Done | `monitoring/grafana/dashboards/*` |
+| Prometheus alert rules | Done | `monitoring/prometheus/alerts.yml` |
 | Local end-to-end smoke runner | Done | `scripts/local_e2e.py` |
 | Benchmark runner | Done | `benchmark/run_benchmark.py` |
 | Benchmark report generator | Done | `benchmark/generate_report.py` |
@@ -123,9 +124,10 @@ uv run python benchmark/client_smoke_test.py
   `tokenizer.json` files. Exact production parity still depends on providing
   the same tokenizer artifact as the served model.
 - Kubernetes and Helm assets include basic ingress, TLS, HPA, external Secret,
-  and vLLM startup examples. They still do not include ServiceMonitor CRDs,
-  cluster-specific GPU autoscaling, organization-specific secret stores,
-  persistent cluster storage, or cross-backend GPU-aware routing.
+  vLLM startup, and Prometheus alert rule examples. They still do not include
+  ServiceMonitor CRDs, Alertmanager receiver routing, cluster-specific GPU
+  autoscaling, organization-specific secret stores, persistent cluster storage,
+  or cross-backend GPU-aware routing.
 - Secrets in example manifests are local placeholders and must be replaced
   before any shared or public deployment.
 - Grafana dashboards are provisioned for local experimentation. Long-term
@@ -148,7 +150,7 @@ uv run python benchmark/client_smoke_test.py
 | `docs/configuration.md` | Runtime configuration matrix and secret handling |
 | `docs/design_decisions.md` | Architecture choices and tradeoffs |
 | `docs/failure_analysis.md` | Troubleshooting guide for common failures |
-| `docs/production_hardening.md` | Ingress/TLS, secrets, autoscaling, vLLM readiness, Grafana persistence |
+| `docs/production_hardening.md` | Ingress/TLS, secrets, autoscaling, vLLM readiness, alerting, Grafana persistence |
 | `docs/gateway_overhead_report.md` | Local direct-vLLM vs Gateway benchmark comparison |
 | `docs/performance_benchmarking.md` | Benchmark profiles, portfolio run commands, and metric interpretation |
 | `docs/portfolio_summary.md` | Final project pitch, demo script, and CV bullets |

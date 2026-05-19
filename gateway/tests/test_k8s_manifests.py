@@ -108,9 +108,16 @@ def test_prometheus_k8s_config_scrapes_gateway_metrics() -> None:
     deployment = read_manifest("prometheus-deployment.yaml")
 
     assert "job_name: gateway" in config
+    assert "evaluation_interval: 30s" in config
+    assert "rule_files:" in config
+    assert "/etc/prometheus/alerts.yml" in config
+    assert "alerts.yml: |" in config
+    assert "GatewayHighErrorRate" in config
+    assert "VLLMHighKVCacheUsage" in config
     assert "metrics_path: /metrics" in config
     assert "gateway:8080" in config
     assert "mountPath: /etc/prometheus/prometheus.yml" in deployment
+    assert "mountPath: /etc/prometheus/alerts.yml" in deployment
     assert "path: /-/ready" in deployment
 
 
@@ -167,6 +174,8 @@ def test_gpu_prometheus_patch_scrapes_vllm_metrics() -> None:
     assert "job_name: gateway" in manifest
     assert "job_name: vllm" in manifest
     assert "vllm:8000" in manifest
+    assert "rule_files:" in manifest
+    assert "/etc/prometheus/alerts.yml" in manifest
 
 
 def test_external_secret_example_documents_required_secret_keys() -> None:

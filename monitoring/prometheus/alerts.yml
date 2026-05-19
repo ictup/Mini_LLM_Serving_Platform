@@ -1,0 +1,94 @@
+groups:
+  - name: gateway.rules
+    rules:
+      - alert: GatewayHighErrorRate
+        expr: |
+          (
+            sum(rate(gateway_http_errors_total[5m]))
+            /
+            clamp_min(sum(rate(gateway_http_requests_total[5m])), 1)
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          service: gateway
+        annotations:
+          summary: Gateway error rate is above 5%.
+          description: More than 5% of Gateway requests have returned errors for 5 minutes.
+
+      - alert: GatewayHighP95Latency
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum(rate(gateway_http_request_duration_seconds_bucket[5m])) by (le, path)
+          ) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: gateway
+        annotations:
+          summary: Gateway p95 request latency is above 2 seconds.
+          description: Gateway p95 latency has stayed above 2 seconds for 5 minutes.
+
+      - alert: GatewayHighP95TTFT
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum(rate(gateway_stream_ttft_seconds_bucket[5m])) by (le, model, backend_model)
+          ) > 0.75
+        for: 5m
+        labels:
+          severity: warning
+          service: gateway
+        annotations:
+          summary: Gateway streaming p95 TTFT is above 750 ms.
+          description: Streaming time to first token has stayed above 750 ms for 5 minutes.
+
+      - alert: GatewayHighRejectionRate
+        expr: |
+          sum by (reason) (rate(gateway_http_rejections_total[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          service: gateway
+        annotations:
+          summary: Gateway rejection rate is elevated.
+          description: Gateway is rejecting more than 0.5 requests per second for one reason.
+
+  - name: vllm.rules
+    rules:
+      - alert: VLLMWaitingRequests
+        expr: |
+          max(vllm:num_requests_waiting) > 0
+        for: 5m
+        labels:
+          severity: warning
+          service: vllm
+        annotations:
+          summary: vLLM has queued waiting requests.
+          description: vLLM has had waiting requests for 5 minutes, indicating engine saturation.
+
+      - alert: VLLMHighKVCacheUsage
+        expr: |
+          max by (model_name) ((vllm:kv_cache_usage_perc or vllm:gpu_cache_usage_perc) * 100) > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: vllm
+        annotations:
+          summary: vLLM KV cache usage is above 85%.
+          description: KV cache pressure has stayed above 85% for 5 minutes.
+
+      - alert: VLLMHighP95TTFT
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum(rate(vllm:time_to_first_token_seconds_bucket[5m])) by (le, model_name)
+          ) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: vllm
+        annotations:
+          summary: vLLM p95 TTFT is above 1 second.
+          description: vLLM engine time to first token has stayed above 1 second for 5 minutes.

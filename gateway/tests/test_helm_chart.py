@@ -37,6 +37,9 @@ def test_helm_chart_has_expected_metadata_and_values() -> None:
     assert "mockBackend:" in values
     assert "redis:" in values
     assert "prometheus:" in values
+    assert "alerting:" in values
+    assert "gatewayHighErrorRatio: 0.05" in values
+    assert "vllmKvCacheUsagePercent: 85" in values
     assert "vllm:" in values
     assert "enabled: false" in values
     assert "Qwen/Qwen2.5-0.5B-Instruct" in values
@@ -116,3 +119,8 @@ def test_helm_chart_templates_mock_backend_redis_and_prometheus() -> None:
     assert "redis-cli" in redis
     assert "{{- if .Values.prometheus.enabled }}" in prometheus
     assert "gateway:{{ .Values.gateway.service.port }}" in prometheus
+    assert "evaluation_interval: {{ .Values.prometheus.evaluationInterval }}" in prometheus
+    assert "/etc/prometheus/alerts.yml" in prometheus
+    assert "alert: GatewayHighErrorRate" in prometheus
+    assert "alert: VLLMHighKVCacheUsage" in prometheus
+    assert "mountPath: /etc/prometheus/alerts.yml" in prometheus

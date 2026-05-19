@@ -30,6 +30,10 @@ spec:
               mountPath: /etc/prometheus/prometheus.yml
               subPath: prometheus.yml
               readOnly: true
+            - name: prometheus-config
+              mountPath: /etc/prometheus/alerts.yml
+              subPath: alerts.yml
+              readOnly: true
           livenessProbe:
             httpGet:
               path: /-/healthy

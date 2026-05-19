@@ -89,6 +89,8 @@ def test_gpu_prometheus_config_scrapes_vllm() -> None:
     assert "job_name: gateway" in prometheus_gpu_config
     assert "job_name: vllm" in prometheus_gpu_config
     assert "vllm:8000" in prometheus_gpu_config
+    assert "rule_files:" in prometheus_gpu_config
+    assert "/etc/prometheus/alerts.yml" in prometheus_gpu_config
 
 
 def test_docker_compose_persists_grafana_state() -> None:

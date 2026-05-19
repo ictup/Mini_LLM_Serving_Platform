@@ -31,7 +31,7 @@ without claiming to be a full enterprise GPU scheduler.
 - Production-facing concerns around auth, request IDs, structured JSON logs,
   normalized errors, request size limits, readiness checks, and warmup.
 - Prometheus and Grafana observability for Gateway behavior and vLLM engine
-  metrics.
+  metrics, plus alert rules for common Gateway and vLLM saturation signals.
 - Benchmark tooling for latency, TTFT, inter-token latency, throughput, error
   rate, and Gateway overhead.
 - Deployment assets for Docker Compose, Kubernetes overlays, and Helm values.
@@ -257,7 +257,7 @@ helm template mini-llm deploy/helm \
 | `gateway/app` | FastAPI Gateway, auth, rate limiting, proxying, metrics |
 | `serving/mock_backend` | OpenAI-compatible mock backend |
 | `benchmark` | SDK smoke tests, async benchmark runner, report tools |
-| `monitoring` | Prometheus config and Grafana dashboards |
+| `monitoring` | Prometheus config, alert rules, and Grafana dashboards |
 | `deploy/k8s` | No-GPU Kubernetes manifests |
 | `deploy/k8s-gpu` | vLLM Kubernetes overlay |
 | `deploy/helm` | Helm chart for mock and vLLM modes |

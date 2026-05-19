@@ -10,7 +10,13 @@ data:
   prometheus.yml: |
     global:
       scrape_interval: {{ .Values.prometheus.scrapeInterval }}
+      evaluation_interval: {{ .Values.prometheus.evaluationInterval }}
 
+{{ if .Values.prometheus.alerting.enabled }}
+    rule_files:
+      - /etc/prometheus/alerts.yml
+
+{{ end }}
     scrape_configs:
       - job_name: gateway
         metrics_path: /metrics
@@ -25,6 +31,103 @@ data:
           - targets:
               - vllm:{{ .Values.vllm.service.port }}
       {{- end }}
+  {{- if .Values.prometheus.alerting.enabled }}
+  alerts.yml: |
+    groups:
+      - name: gateway.rules
+        rules:
+          - alert: GatewayHighErrorRate
+            expr: |
+              (
+                sum(rate(gateway_http_errors_total[{{ .Values.prometheus.alerting.window }}]))
+                /
+                clamp_min(sum(rate(gateway_http_requests_total[{{ .Values.prometheus.alerting.window }}])), 1)
+              ) > {{ .Values.prometheus.alerting.gatewayHighErrorRatio }}
+            for: {{ .Values.prometheus.alerting.for }}
+            labels:
+              severity: warning
+              service: gateway
+            annotations:
+              summary: Gateway error rate is above the configured threshold.
+              description: Gateway requests are returning errors above the configured ratio.
+
+          - alert: GatewayHighP95Latency
+            expr: |
+              histogram_quantile(
+                0.95,
+                sum(rate(gateway_http_request_duration_seconds_bucket[{{ .Values.prometheus.alerting.window }}])) by (le, path)
+              ) > {{ .Values.prometheus.alerting.gatewayHighLatencySeconds }}
+            for: {{ .Values.prometheus.alerting.for }}
+            labels:
+              severity: warning
+              service: gateway
+            annotations:
+              summary: Gateway p95 request latency is above the configured threshold.
+              description: Gateway p95 latency is elevated for the configured alert window.
+
+          - alert: GatewayHighP95TTFT
+            expr: |
+              histogram_quantile(
+                0.95,
+                sum(rate(gateway_stream_ttft_seconds_bucket[{{ .Values.prometheus.alerting.window }}])) by (le, model, backend_model)
+              ) > {{ .Values.prometheus.alerting.gatewayHighTtftSeconds }}
+            for: {{ .Values.prometheus.alerting.for }}
+            labels:
+              severity: warning
+              service: gateway
+            annotations:
+              summary: Gateway streaming p95 TTFT is above the configured threshold.
+              description: Gateway streaming time to first token is elevated.
+
+          - alert: GatewayHighRejectionRate
+            expr: |
+              sum by (reason) (rate(gateway_http_rejections_total[{{ .Values.prometheus.alerting.window }}])) > {{ .Values.prometheus.alerting.gatewayRejectionRateRps }}
+            for: {{ .Values.prometheus.alerting.for }}
+            labels:
+              severity: warning
+              service: gateway
+            annotations:
+              summary: Gateway rejection rate is elevated.
+              description: Gateway is rejecting requests above the configured rate.
+
+      - name: vllm.rules
+        rules:
+          - alert: VLLMWaitingRequests
+            expr: |
+              max(vllm:num_requests_waiting) > {{ .Values.prometheus.alerting.vllmWaitingRequests }}
+            for: {{ .Values.prometheus.alerting.for }}
+            labels:
+              severity: warning
+              service: vllm
+            annotations:
+              summary: vLLM has queued waiting requests.
+              description: vLLM has queued requests for the configured alert window.
+
+          - alert: VLLMHighKVCacheUsage
+            expr: |
+              max by (model_name) ((vllm:kv_cache_usage_perc or vllm:gpu_cache_usage_perc) * 100) > {{ .Values.prometheus.alerting.vllmKvCacheUsagePercent }}
+            for: {{ .Values.prometheus.alerting.for }}
+            labels:
+              severity: warning
+              service: vllm
+            annotations:
+              summary: vLLM KV cache usage is above the configured threshold.
+              description: vLLM KV cache pressure is elevated.
+
+          - alert: VLLMHighP95TTFT
+            expr: |
+              histogram_quantile(
+                0.95,
+                sum(rate(vllm:time_to_first_token_seconds_bucket[{{ .Values.prometheus.alerting.window }}])) by (le, model_name)
+              ) > {{ .Values.prometheus.alerting.vllmHighTtftSeconds }}
+            for: {{ .Values.prometheus.alerting.for }}
+            labels:
+              severity: warning
+              service: vllm
+            annotations:
+              summary: vLLM p95 TTFT is above the configured threshold.
+              description: vLLM engine time to first token is elevated.
+  {{- end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -56,6 +159,12 @@ spec:
               mountPath: /etc/prometheus/prometheus.yml
               subPath: prometheus.yml
               readOnly: true
+            {{- if .Values.prometheus.alerting.enabled }}
+            - name: prometheus-config
+              mountPath: /etc/prometheus/alerts.yml
+              subPath: alerts.yml
+              readOnly: true
+            {{- end }}
           livenessProbe:
             httpGet:
               path: /-/healthy
