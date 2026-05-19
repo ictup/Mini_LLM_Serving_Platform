@@ -6,6 +6,7 @@ resources:
   - vllm-secret.yaml
   - vllm-deployment.yaml
   - vllm-service.yaml
+  - dcgm-exporter.yaml
 patches:
   - path: gateway-config-patch.yaml
   - path: gateway-secret-patch.yaml

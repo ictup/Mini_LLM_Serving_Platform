@@ -41,8 +41,10 @@ with more available GPU memory.
 | Direct-vs-Gateway comparison tool | Done | `benchmark/compare_results.py` |
 | Prometheus metrics snapshot collector | Done | `benchmark/collect_prometheus_snapshot.py` |
 | Prometheus benchmark time-series sampler | Done | `benchmark/sample_prometheus_timeseries.py` |
+| Tokenizer-level benchmark output tokens and TPOT | Done | `benchmark/run_benchmark.py` |
 | Docker no-GPU stack | Done | `docker-compose.yml` |
 | Docker vLLM GPU override | Done, locally validated | `docker-compose.gpu.yml`, `scripts/warmup_gateway.py` |
+| DCGM GPU utilization and memory metrics | Done | `dcgm-exporter`, `monitoring/grafana/dashboards/gpu-overview.json` |
 | Kubernetes no-GPU manifests | Done | `deploy/k8s` |
 | Kubernetes vLLM GPU overlay | Implemented, template-validated | `deploy/k8s-gpu` |
 | Helm chart | Done | `deploy/helm`, `helm lint`, `helm template` |
@@ -114,6 +116,8 @@ Validated locally on Windows + Docker Desktop + RTX 4060 Laptop GPU:
 - OpenAI SDK non-streaming and streaming smoke test succeeded.
 - Direct vLLM and Gateway streaming benchmarks completed with zero errors.
 - Direct-vs-Gateway report generated at `docs/gateway_overhead_report.md`.
+- DCGM exporter is wired into the GPU Compose path for GPU utilization and
+  framebuffer memory telemetry.
 
 For another CUDA-capable host, repeat:
 
@@ -129,11 +133,12 @@ uv run python benchmark/client_smoke_test.py
   substitute for real model latency, tokenization, or GPU scheduling behavior.
 - vLLM has been locally verified with the 0.5B model. Larger models depend on
   available GPU memory and driver/container compatibility.
-- Token accounting supports model-aware profiles and optional local
+- Token accounting and benchmark output-token metrics support optional local
   `tokenizer.json` files. Exact production parity still depends on providing
   the same tokenizer artifact as the served model.
 - Kubernetes, Helm, GitOps, and Terraform assets include basic ingress, TLS,
-  HPA, external Secret, vLLM startup, and Prometheus alert rule examples. They
+  HPA, external Secret, vLLM startup, DCGM exporter, and Prometheus alert rule
+  examples. They
   still do not include cloud-cluster provisioning, ServiceMonitor CRDs,
   Alertmanager receiver routing, cluster-specific GPU autoscaling,
   organization-specific secret stores, persistent cluster storage, or

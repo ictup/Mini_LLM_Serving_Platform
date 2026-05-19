@@ -30,5 +30,7 @@ Generated at: `2026-05-17T17:00:28+00:00`
 - TTFT is measured until the first non-empty streaming content chunk.
 - ITL is the interval between non-empty streaming content chunks.
 - Output events count SSE chunks with `delta.content`.
-- Output events are not tokenizer-level output token counts.
+- Output token metrics are tokenizer-level only when the run was created with
+  `--output-tokenizer-path`.
+- TPOT is derived from tokenizer-level output tokens and streaming TTFT.
 - Non-streaming runs show `n/a` for TTFT and ITL.

@@ -7,8 +7,9 @@ places a FastAPI platform layer in front of mock or vLLM backends and adds the
 features commonly needed around model serving: authentication, request IDs,
 model aliases, weighted routing, Redis-backed RPM/TPM/concurrency limits,
 structured logging, Prometheus metrics, Grafana dashboards, alert rules,
-streaming proxying, Docker Compose, Kubernetes, Helm, GitOps, Terraform,
-supply-chain checks, release automation, and benchmark reporting.
+streaming proxying, DCGM GPU telemetry, Docker Compose, Kubernetes, Helm,
+GitOps, Terraform, supply-chain checks, release automation, and benchmark
+reporting.
 
 The local no-GPU path uses a mock backend so the repository remains
 reproducible in CI and on laptops. The GPU path has been validated with
@@ -31,8 +32,8 @@ Laptop GPU.
 
 OpenAI-Compatible LLM Serving Platform with vLLM and Production Tooling
 
-Python, FastAPI, vLLM, Redis, Prometheus, Grafana, Docker, Kubernetes, Helm,
-Argo CD, Terraform, GitHub Actions
+Python, FastAPI, vLLM, Redis, Prometheus, Grafana, DCGM exporter, Docker,
+Kubernetes, Helm, Argo CD, Terraform, GitHub Actions
 
 - Built a FastAPI gateway in front of mock and vLLM backends with
   OpenAI-compatible chat completions, streaming SSE proxying, model aliases,
@@ -42,13 +43,14 @@ Argo CD, Terraform, GitHub Actions
   plus request body and chat input limits for operational safety.
 - Implemented Prometheus/Grafana observability and alert rules for request
   volume, errors, rejection reasons, latency, streaming TTFT, streaming
-  duration, and vLLM engine metrics.
+  duration, vLLM engine metrics, and DCGM GPU utilization/memory telemetry.
 - Created Docker Compose, Kubernetes, Helm, Argo CD, and Terraform deployment
   paths with optional ingress, HPA, external Secret references, vLLM startup
   probes, and a Gateway warmup tool.
 - Benchmarked direct vLLM vs Gateway-routed streaming inference on a local RTX
   4060 Laptop GPU with p95/p99 latency, TTFT, inter-token latency, throughput,
-  error-rate, and Prometheus snapshot/time-series evidence.
+  tokenizer-level output tokens/sec, TPOT, error-rate, and Prometheus
+  snapshot/time-series evidence.
 - Added CI, GHCR image publishing, Trivy and pip-audit security workflows,
   SBOM/provenance output, Dependabot updates, SemVer release validation, and a
   changelog-backed release process.

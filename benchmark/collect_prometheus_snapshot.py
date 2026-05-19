@@ -46,6 +46,14 @@ PROMETHEUS_QUERIES: dict[str, str] = {
         "sum(rate(vllm:time_per_output_token_seconds_bucket[5m])) by (le, model_name)"
         "))"
     ),
+    "gpu_utilization_percent": "avg by (gpu, UUID, device) (DCGM_FI_DEV_GPU_UTIL)",
+    "gpu_memory_used_mebibytes": "avg by (gpu, UUID, device) (DCGM_FI_DEV_FB_USED)",
+    "gpu_memory_free_mebibytes": "avg by (gpu, UUID, device) (DCGM_FI_DEV_FB_FREE)",
+    "gpu_memory_used_percent": (
+        "100 * avg by (gpu, UUID, device) (DCGM_FI_DEV_FB_USED) "
+        "/ clamp_min(avg by (gpu, UUID, device) "
+        "(DCGM_FI_DEV_FB_USED + DCGM_FI_DEV_FB_FREE), 1)"
+    ),
 }
 
 

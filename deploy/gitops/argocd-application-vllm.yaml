@@ -35,6 +35,8 @@ spec:
           enabled: true
           alerting:
             enabled: true
+        dcgmExporter:
+          enabled: true
         vllm:
           enabled: true
           image: vllm/vllm-openai:v0.8.5.post1

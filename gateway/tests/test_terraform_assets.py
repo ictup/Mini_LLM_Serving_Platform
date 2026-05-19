@@ -74,6 +74,8 @@ def test_terraform_values_cover_mock_and_vllm_modes() -> None:
     assert "existingSecretName         = var.deploy_vllm ? \"vllm-secret\" : \"\"" in main
     assert "modelAliasesJson   = local.model_aliases_json" in main
     assert "tokenizerProfilesJson = local.tokenizer_profiles_json" in main
+    assert "dcgmExporter" in main
+    assert "var.dcgm_exporter_image" in main
     assert 'default     = "Qwen/Qwen2.5-0.5B-Instruct"' in variables
     assert 'default     = "vllm/vllm-openai:v0.8.5.post1"' in variables
 

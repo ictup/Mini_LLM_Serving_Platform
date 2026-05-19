@@ -73,4 +73,5 @@ Prometheus time-series values are sampled while the benchmark is running. For ga
 - Negative RPS delta means Gateway achieved lower throughput than direct backend.
 - Negative latency overhead can happen in local sequential runs due to run-to-run variance, warmup state, output length variance, and vLLM scheduling. It should be interpreted as no obvious Gateway bottleneck, not as proof that Gateway accelerates the backend.
 - Compare runs only when prompts, stream mode, max tokens, and concurrency match.
-- Output event counts are SSE chunks, not tokenizer-level output token counts.
+- Output event counts are SSE chunks. Output token columns are tokenizer-level
+  only when the benchmark run was created with `--output-tokenizer-path`.

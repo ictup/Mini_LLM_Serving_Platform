@@ -132,6 +132,18 @@ Operational workflow:
 - Prefer adding panels with bounded labels such as `path`, `status_code`,
   `reason`, `model`, and `backend_model`.
 
+## GPU Telemetry
+
+The GPU Docker Compose override starts NVIDIA DCGM exporter and Prometheus
+scrapes it at `dcgm-exporter:9400`. The `GPU Overview` dashboard shows GPU
+utilization, framebuffer memory usage/free memory, and vLLM serving pressure in
+one place.
+
+For Kubernetes or Helm, enable the DCGM exporter only on GPU node pools. Shared
+clusters commonly install DCGM exporter through the NVIDIA GPU Operator or the
+official DCGM exporter Helm chart; this repository includes a lightweight
+example for portfolio validation.
+
 ## Prometheus Alert Rules
 
 The local and Kubernetes Prometheus configurations load

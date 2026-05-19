@@ -4,8 +4,12 @@ import pytest
 
 from benchmark.run_benchmark import (
     BenchmarkRequestResult,
+    OutputTokenCounter,
     apply_profile_defaults,
+    calculate_tpot_seconds,
+    count_output_tokens,
     extract_error_code,
+    extract_non_stream_content,
     extract_stream_content,
     load_prompt_records,
     normalize_prompt_record,
@@ -60,6 +64,8 @@ def test_summarize_results_includes_streaming_metrics() -> None:
                 ttft_seconds=0.1,
                 inter_token_latencies_seconds=(0.02, 0.04),
                 output_event_count=3,
+                output_token_count=6,
+                tpot_seconds=0.08,
             ),
             BenchmarkRequestResult(
                 latency_seconds=0.7,
@@ -68,6 +74,8 @@ def test_summarize_results_includes_streaming_metrics() -> None:
                 ttft_seconds=0.2,
                 inter_token_latencies_seconds=(0.06,),
                 output_event_count=2,
+                output_token_count=4,
+                tpot_seconds=0.1,
             ),
         ],
     )
@@ -78,8 +86,13 @@ def test_summarize_results_includes_streaming_metrics() -> None:
     assert summary.p50_itl_ms == 40.0
     assert summary.p95_itl_ms == 58.0
     assert summary.mean_itl_ms == 40.0
+    assert summary.p50_tpot_ms == 90.0
+    assert summary.p95_tpot_ms == 99.0
+    assert summary.mean_tpot_ms == 90.0
     assert summary.output_events_per_second == 5.0
     assert summary.output_event_count == 5
+    assert summary.output_tokens_per_second == 10.0
+    assert summary.output_token_count == 10
 
 
 def test_apply_profile_defaults_uses_portfolio_values_without_overriding_explicit_values() -> None:
@@ -112,6 +125,41 @@ def test_extract_stream_content_reads_delta_content() -> None:
 
     assert extract_stream_content(payload) == "hello"
     assert extract_stream_content("[DONE]") is None
+
+
+def test_extract_non_stream_content_reads_first_choice_message() -> None:
+    payload = {"choices": [{"message": {"role": "assistant", "content": "hello"}}]}
+
+    assert extract_non_stream_content(payload) == "hello"
+    assert extract_non_stream_content({"choices": []}) == ""
+
+
+def test_output_token_counter_counts_with_tokenizer_like_object() -> None:
+    class Encoded:
+        ids = [1, 2, 3]
+
+    class Tokenizer:
+        def encode(self, text: str) -> Encoded:
+            assert text == "hello"
+            return Encoded()
+
+    counter = OutputTokenCounter(Tokenizer())
+
+    assert count_output_tokens("hello", counter) == 3
+    assert count_output_tokens("hello", None) is None
+
+
+def test_calculate_tpot_seconds_uses_decode_time_after_ttft() -> None:
+    assert calculate_tpot_seconds(
+        latency_seconds=1.1,
+        ttft_seconds=0.1,
+        output_token_count=6,
+    ) == pytest.approx(0.2)
+    assert calculate_tpot_seconds(
+        latency_seconds=1.1,
+        ttft_seconds=0.1,
+        output_token_count=1,
+    ) is None
 
 
 def test_extract_error_code_reads_openai_error_envelope() -> None:

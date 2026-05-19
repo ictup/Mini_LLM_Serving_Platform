@@ -79,6 +79,14 @@ prometheus:
   service:
     port: 9090
 
+dcgmExporter:
+  enabled: false
+  image: nvcr.io/nvidia/k8s/dcgm-exporter:3.3.9-3.6.1-ubuntu22.04
+  imagePullPolicy: IfNotPresent
+  gpu: 1
+  service:
+    port: 9400
+
 vllm:
   enabled: false
   image: vllm/vllm-openai:v0.8.5.post1

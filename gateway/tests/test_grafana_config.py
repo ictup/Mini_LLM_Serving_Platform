@@ -4,6 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 DASHBOARD_PATH = ROOT / "monitoring/grafana/dashboards/gateway-overview.json"
 VLLM_DASHBOARD_PATH = ROOT / "monitoring/grafana/dashboards/vllm-engine-overview.json"
+GPU_DASHBOARD_PATH = ROOT / "monitoring/grafana/dashboards/gpu-overview.json"
 DATASOURCE_PATH = ROOT / "monitoring/grafana/provisioning/datasources/prometheus.yml"
 PROVIDER_PATH = ROOT / "monitoring/grafana/provisioning/dashboards/gateway.yml"
 PROMETHEUS_GPU_PATH = ROOT / "monitoring/prometheus/prometheus.gpu.yml"
@@ -88,9 +89,30 @@ def test_gpu_prometheus_config_scrapes_vllm() -> None:
 
     assert "job_name: gateway" in prometheus_gpu_config
     assert "job_name: vllm" in prometheus_gpu_config
+    assert "job_name: dcgm-exporter" in prometheus_gpu_config
     assert "vllm:8000" in prometheus_gpu_config
+    assert "dcgm-exporter:9400" in prometheus_gpu_config
     assert "rule_files:" in prometheus_gpu_config
     assert "/etc/prometheus/alerts.yml" in prometheus_gpu_config
+
+
+def test_gpu_dashboard_json_references_dcgm_and_serving_pressure_metrics() -> None:
+    dashboard = json.loads(GPU_DASHBOARD_PATH.read_text(encoding="utf-8"))
+    expressions = [
+        target["expr"]
+        for panel in dashboard["panels"]
+        for target in panel.get("targets", [])
+        if "expr" in target
+    ]
+
+    assert dashboard["uid"] == "gpu-overview"
+    assert dashboard["title"] == "GPU Overview"
+    assert len(dashboard["panels"]) == 4
+    assert any("DCGM_FI_DEV_GPU_UTIL" in expression for expression in expressions)
+    assert any("DCGM_FI_DEV_FB_USED" in expression for expression in expressions)
+    assert any("DCGM_FI_DEV_FB_FREE" in expression for expression in expressions)
+    assert any("vllm:num_requests_running" in expression for expression in expressions)
+    assert any("vllm:num_requests_waiting" in expression for expression in expressions)
 
 
 def test_docker_compose_persists_grafana_state() -> None:
@@ -107,3 +129,6 @@ def test_gpu_compose_waits_for_vllm_healthcheck() -> None:
     assert "condition: service_healthy" in compose
     assert "healthcheck:" in compose
     assert "http://127.0.0.1:8000/health" in compose
+    assert "dcgm-exporter:" in compose
+    assert "dcgm-exporter:3.3.9-3.6.1-ubuntu22.04" in compose
+    assert '"9400:9400"' in compose

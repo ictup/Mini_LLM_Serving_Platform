@@ -138,3 +138,9 @@ variable "vllm_gpu_count" {
   type        = number
   default     = 1
 }
+
+variable "dcgm_exporter_image" {
+  description = "NVIDIA DCGM exporter image used when deploy_vllm is true."
+  type        = string
+  default     = "nvcr.io/nvidia/k8s/dcgm-exporter:3.3.9-3.6.1-ubuntu22.04"
+}

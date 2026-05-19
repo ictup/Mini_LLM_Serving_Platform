@@ -70,6 +70,8 @@ def test_build_comparison_markdown_renders_overhead_values() -> None:
                     "p99_latency_ms": 190.0,
                     "p50_ttft_ms": 40.0,
                     "p95_ttft_ms": 60.0,
+                    "output_tokens_per_second": 200.0,
+                    "p95_tpot_ms": 15.0,
                     "error_rate": 0.0,
                 }
             ],
@@ -91,6 +93,8 @@ def test_build_comparison_markdown_renders_overhead_values() -> None:
                     "p99_latency_ms": 210.0,
                     "p50_ttft_ms": 55.0,
                     "p95_ttft_ms": 90.0,
+                    "output_tokens_per_second": 180.0,
+                    "p95_tpot_ms": 18.0,
                     "error_rate": 0.1,
                     "error_code_counts": {"rate_limit_exceeded": 1},
                 }
@@ -109,7 +113,10 @@ def test_build_comparison_markdown_renders_overhead_values() -> None:
     assert "# Gateway Overhead Report" in report
     assert "| direct backend | benchmark/results/direct.json |" in report
     assert "| gateway | benchmark/results/gateway.json |" in report
-    assert "| 1 | 10.00 | 8.00 | -20.00% | 100.00 | 120.00 | 20.00 |" in report
+    assert (
+        "| 1 | 10.00 | 8.00 | -20.00% | 100.00 | 120.00 | 20.00 | "
+        "200.00 | 180.00 | -10.00% | 15.00 | 18.00 | 3.00 |"
+    ) in report
     assert (
         "150.00 | 180.00 | 30.00 | 190.00 | 210.00 | 20.00 | "
         "40.00 | 55.00 | 15.00 | 60.00 | 90.00 | 30.00 | 10.00 pp | "

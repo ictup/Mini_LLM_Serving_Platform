@@ -61,9 +61,9 @@ def test_release_docs_and_changelog_describe_release_contract() -> None:
     project_version = load_project_version(PYPROJECT_PATH)
 
     assert "pyproject.toml is the source of truth" in release_doc
-    assert "scripts/check_release_version.py --tag v0.1.0" in release_doc
-    assert "git tag v0.1.0" in release_doc
+    assert "scripts/check_release_version.py --tag v0.1.1" in release_doc
+    assert "git tag v0.1.1" in release_doc
     assert "GHCR" in release_doc
     assert "SBOM/provenance" in release_doc
-    assert f"## {project_version} - 2026-05-19" in changelog
-    assert "Initial portfolio release" in changelog
+    assert f"## {project_version} - 2026-05-20" in changelog
+    assert "Portfolio benchmark and GPU observability release" in changelog

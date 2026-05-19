@@ -57,6 +57,7 @@ def test_gitops_vllm_application_uses_external_secrets_and_gpu_values() -> None:
     assert "model: Qwen/Qwen2.5-0.5B-Instruct" in manifest
     assert "gpu: 1" in manifest
     assert "tokenizerProfilesJson:" in manifest
+    assert "dcgmExporter:" in manifest
 
 
 def test_container_workflow_publishes_gateway_image_to_ghcr() -> None:

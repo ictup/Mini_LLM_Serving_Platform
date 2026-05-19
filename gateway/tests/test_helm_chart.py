@@ -40,6 +40,8 @@ def test_helm_chart_has_expected_metadata_and_values() -> None:
     assert "alerting:" in values
     assert "gatewayHighErrorRatio: 0.05" in values
     assert "vllmKvCacheUsagePercent: 85" in values
+    assert "dcgmExporter:" in values
+    assert "nvcr.io/nvidia/k8s/dcgm-exporter:3.3.9-3.6.1-ubuntu22.04" in values
     assert "vllm:" in values
     assert "enabled: false" in values
     assert "Qwen/Qwen2.5-0.5B-Instruct" in values
@@ -87,6 +89,7 @@ def test_helm_gateway_template_preserves_health_and_ready_probes() -> None:
 def test_helm_chart_templates_optional_vllm_backend() -> None:
     vllm = read_template("vllm.yaml")
     prometheus = read_template("prometheus.yaml")
+    dcgm = read_template("dcgm-exporter.yaml")
 
     assert "{{- if .Values.vllm.enabled }}" in vllm
     assert "image: {{ .Values.vllm.image | quote }}" in vllm
@@ -98,6 +101,12 @@ def test_helm_chart_templates_optional_vllm_backend() -> None:
     assert "--disable-frontend-multiprocessing" in vllm
     assert "job_name: vllm" in prometheus
     assert "vllm:{{ .Values.vllm.service.port }}" in prometheus
+    assert "{{- if .Values.dcgmExporter.enabled }}" in dcgm
+    assert "kind: DaemonSet" in dcgm
+    assert "dcgm-exporter" in dcgm
+    assert "nvidia.com/gpu: {{ .Values.dcgmExporter.gpu | quote }}" in dcgm
+    assert "job_name: dcgm-exporter" in prometheus
+    assert "dcgm-exporter:{{ .Values.dcgmExporter.service.port }}" in prometheus
 
 
 def test_helm_chart_templates_ingress_hpa_and_external_secrets() -> None:

@@ -1,0 +1,48 @@
+{{- if .Values.dcgmExporter.enabled }}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: dcgm-exporter
+  namespace: {{ .Values.namespace.name }}
+  labels:
+{{ include "mini-llm.componentLabels" (dict "name" "dcgm-exporter") | indent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: dcgm-exporter
+  template:
+    metadata:
+      labels:
+{{ include "mini-llm.componentLabels" (dict "name" "dcgm-exporter") | indent 8 }}
+    spec:
+      containers:
+        - name: dcgm-exporter
+          image: {{ .Values.dcgmExporter.image | quote }}
+          imagePullPolicy: {{ .Values.dcgmExporter.imagePullPolicy }}
+          ports:
+            - name: metrics
+              containerPort: {{ .Values.dcgmExporter.service.port }}
+          securityContext:
+            capabilities:
+              add:
+                - SYS_ADMIN
+          resources:
+            limits:
+              nvidia.com/gpu: {{ .Values.dcgmExporter.gpu | quote }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dcgm-exporter
+  namespace: {{ .Values.namespace.name }}
+  labels:
+{{ include "mini-llm.componentLabels" (dict "name" "dcgm-exporter") | indent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: dcgm-exporter
+  ports:
+    - name: metrics
+      port: {{ .Values.dcgmExporter.service.port }}
+      targetPort: metrics
+{{- end }}

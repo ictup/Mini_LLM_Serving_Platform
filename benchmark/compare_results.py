@@ -120,14 +120,17 @@ def build_comparison_markdown(
         "## Direct Backend vs Gateway",
         "",
         "| Concurrency | Direct RPS | Gateway RPS | RPS Delta | Direct P50 Latency (ms) | "
-        "Gateway P50 Latency (ms) | P50 Overhead (ms) | Direct P95 Latency (ms) | "
+        "Gateway P50 Latency (ms) | P50 Overhead (ms) | Direct Output Tok/s | "
+        "Gateway Output Tok/s | Output Tok/s Delta | Direct P95 TPOT (ms) | "
+        "Gateway P95 TPOT (ms) | P95 TPOT Overhead (ms) | Direct P95 Latency (ms) | "
         "Gateway P95 Latency (ms) | P95 Overhead (ms) | Direct P99 Latency (ms) | "
         "Gateway P99 Latency (ms) | P99 Overhead (ms) | Direct P50 TTFT (ms) | "
         "Gateway P50 TTFT (ms) | P50 TTFT Overhead (ms) | Direct P95 TTFT (ms) | "
         "Gateway P95 TTFT (ms) | P95 TTFT Overhead (ms) | Error Delta | "
         "Gateway Error Codes |",
         "| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | "
-        "---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
+        "---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | "
+        "---: | ---: | ---: | --- |",
     ]
 
     for row in rows:
@@ -151,7 +154,8 @@ def build_comparison_markdown(
             "interpreted as no obvious Gateway bottleneck, not as proof that Gateway accelerates "
             "the backend.",
             "- Compare runs only when prompts, stream mode, max tokens, and concurrency match.",
-            "- Output event counts are SSE chunks, not tokenizer-level output token counts.",
+            "- Output event counts are SSE chunks. Output token columns are tokenizer-level only "
+            "when the benchmark run was created with `--output-tokenizer-path`.",
             "",
         ]
     )
@@ -296,7 +300,16 @@ def format_prometheus_labels(metric: Any) -> str:
     if not isinstance(metric, dict):
         return "none"
 
-    label_keys = ("model", "backend_model", "model_name", "job", "instance")
+    label_keys = (
+        "model",
+        "backend_model",
+        "model_name",
+        "gpu",
+        "UUID",
+        "device",
+        "job",
+        "instance",
+    )
     labels = [
         f"{key}={metric[key]}"
         for key in label_keys
@@ -333,6 +346,17 @@ def comparison_row(row: ComparisonRow) -> str:
             format_float(direct.get("p50_latency_ms")),
             format_float(gateway.get("p50_latency_ms")),
             format_float(delta(gateway.get("p50_latency_ms"), direct.get("p50_latency_ms"))),
+            format_float(direct.get("output_tokens_per_second")),
+            format_float(gateway.get("output_tokens_per_second")),
+            format_percent(
+                delta_percent(
+                    gateway.get("output_tokens_per_second"),
+                    direct.get("output_tokens_per_second"),
+                )
+            ),
+            format_float(direct.get("p95_tpot_ms")),
+            format_float(gateway.get("p95_tpot_ms")),
+            format_float(delta(gateway.get("p95_tpot_ms"), direct.get("p95_tpot_ms"))),
             format_float(direct.get("p95_latency_ms")),
             format_float(gateway.get("p95_latency_ms")),
             format_float(delta(gateway.get("p95_latency_ms"), direct.get("p95_latency_ms"))),

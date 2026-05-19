@@ -95,9 +95,12 @@ def build_markdown_report(
                 "| Concurrency | Total | Success | Errors | RPS | P50 Latency (ms) | "
                 "P95 Latency (ms) | P99 Latency (ms) | P50 TTFT (ms) | P95 TTFT (ms) | "
                 "P99 TTFT (ms) | P50 ITL (ms) | P95 ITL (ms) | Mean ITL (ms) | "
-                "Output Events/s | Output Events | Error Rate | Error Statuses | Error Codes |",
+                "P50 TPOT (ms) | P95 TPOT (ms) | Mean TPOT (ms) | Output Events/s | "
+                "Output Events | Output Tokens/s | Output Tokens | Error Rate | Error Statuses | "
+                "Error Codes |",
                 "| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | "
-                "---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |",
+                "---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | "
+                "---: | --- | --- |",
             ]
         )
         for summary in result_file.payload["summaries"]:
@@ -114,7 +117,9 @@ def build_markdown_report(
             "- TTFT is measured until the first non-empty streaming content chunk.",
             "- ITL is the interval between non-empty streaming content chunks.",
             "- Output events count SSE chunks with `delta.content`.",
-            "- Output events are not tokenizer-level output token counts.",
+            "- Output token metrics are tokenizer-level only when the run was created with "
+            "`--output-tokenizer-path`.",
+            "- TPOT is derived from tokenizer-level output tokens and streaming TTFT.",
             "- Non-streaming runs show `n/a` for TTFT and ITL.",
             "",
         ]
@@ -138,8 +143,13 @@ def summary_cells(summary: dict[str, Any]) -> list[str]:
         format_float(summary.get("p50_itl_ms")),
         format_float(summary.get("p95_itl_ms")),
         format_float(summary.get("mean_itl_ms")),
+        format_float(summary.get("p50_tpot_ms")),
+        format_float(summary.get("p95_tpot_ms")),
+        format_float(summary.get("mean_tpot_ms")),
         format_float(output_events_per_second(summary)),
         format_integer(summary.get("output_event_count")),
+        format_float(summary.get("output_tokens_per_second")),
+        format_optional_integer(summary.get("output_token_count")),
         format_percent(summary.get("error_rate")),
         format_count_map(summary.get("error_status_counts")),
         format_count_map(summary.get("error_code_counts")),
@@ -187,6 +197,12 @@ def format_concurrency(value: Any) -> str:
 
 
 def format_integer(value: Any) -> str:
+    if isinstance(value, int):
+        return str(value)
+    return "n/a"
+
+
+def format_optional_integer(value: Any) -> str:
     if isinstance(value, int):
         return str(value)
     return "n/a"

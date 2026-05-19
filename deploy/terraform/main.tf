@@ -61,6 +61,11 @@ locals {
       }
     }
 
+    dcgmExporter = {
+      enabled = var.deploy_vllm
+      image   = var.dcgm_exporter_image
+    }
+
     vllm = {
       enabled                    = var.deploy_vllm
       image                      = var.vllm_image

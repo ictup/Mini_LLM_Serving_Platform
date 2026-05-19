@@ -27,6 +27,7 @@ uv run python benchmark/run_benchmark.py \
   --api-key local-vllm-key \
   --model Qwen/Qwen2.5-0.5B-Instruct \
   --prompts benchmark/prompts/short_prompts.jsonl \
+  --output-tokenizer-path D:/models/qwen-tokenizer.json \
   --timeout-seconds 120 \
   --stream true
 ```
@@ -54,6 +55,7 @@ uv run python benchmark/run_benchmark.py \
   --api-key dev-key \
   --model qwen-small \
   --prompts benchmark/prompts/short_prompts.jsonl \
+  --output-tokenizer-path D:/models/qwen-tokenizer.json \
   --timeout-seconds 120 \
   --stream true
 ```
@@ -112,7 +114,8 @@ The sampler writes `benchmark/results/prometheus_timeseries_*.json`. Pass that
 file to `benchmark/compare_results.py` with `--prometheus-timeseries` to add a
 min/mean/max/last table for Gateway and vLLM metrics. The most useful values to
 watch during portfolio runs are vLLM waiting requests, running requests, KV
-cache usage, generation tokens/sec, Gateway P95 latency, and Gateway P95 TTFT.
+cache usage, generation tokens/sec, DCGM GPU utilization, DCGM GPU memory,
+Gateway P95 latency, and Gateway P95 TTFT.
 
 Choose a duration that fully covers the benchmark. For example, if the
 portfolio run takes about two minutes on a laptop GPU, use `--duration-seconds
@@ -127,12 +130,30 @@ The benchmark runner records:
 - P50, P95, and P99 end-to-end latency.
 - P50, P95, and P99 TTFT for streaming runs.
 - P50, P95, and mean inter-token latency proxy.
+- P50, P95, and mean TPOT when `--output-tokenizer-path` is supplied.
 - Output SSE content events per second.
 - Output SSE content event count.
+- Tokenizer-level output tokens and output tokens/sec when
+  `--output-tokenizer-path` is supplied.
 - Run profile, prompt file, max tokens, warmup count, timeout, and concurrency.
 
 Output events are SSE chunks with `delta.content`, not tokenizer-level output
-tokens. Tokenizer-accurate output tokens/sec is a later enhancement.
+tokens. Tokenizer-level output metrics require a local Hugging Face
+`tokenizer.json` from the same model family as the served model.
+
+## GPU Metrics
+
+The GPU Docker Compose override starts NVIDIA DCGM exporter and Prometheus
+scrapes it as `dcgm-exporter:9400`. The snapshot and time-series samplers query:
+
+- `gpu_utilization_percent` from `DCGM_FI_DEV_GPU_UTIL`.
+- `gpu_memory_used_mebibytes` from `DCGM_FI_DEV_FB_USED`.
+- `gpu_memory_free_mebibytes` from `DCGM_FI_DEV_FB_FREE`.
+- `gpu_memory_used_percent` from used/free framebuffer memory.
+
+Grafana provisions a `GPU Overview` dashboard alongside Gateway and vLLM
+dashboards. If these metrics have no samples, confirm Docker can run GPU
+containers and that the `dcgm-exporter` service is healthy.
 
 ## Interpretation
 

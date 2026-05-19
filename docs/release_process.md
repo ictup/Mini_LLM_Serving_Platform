@@ -33,7 +33,7 @@ helm template mini-llm deploy/helm \
 Validate the intended tag:
 
 ```bash
-uv run python scripts/check_release_version.py --tag v0.1.0
+uv run python scripts/check_release_version.py --tag v0.1.1
 ```
 
 ## Create a Release
@@ -41,8 +41,8 @@ uv run python scripts/check_release_version.py --tag v0.1.0
 Update `pyproject.toml` and `CHANGELOG.md`, then create and push the tag:
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.1.1
+git push origin v0.1.1
 ```
 
 Pushing the tag starts two workflows:

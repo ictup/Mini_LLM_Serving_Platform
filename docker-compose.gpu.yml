@@ -69,3 +69,19 @@ services:
         condition: service_started
       vllm:
         condition: service_started
+      dcgm-exporter:
+        condition: service_started
+
+  dcgm-exporter:
+    image: ${DCGM_EXPORTER_IMAGE:-nvcr.io/nvidia/k8s/dcgm-exporter:3.3.9-3.6.1-ubuntu22.04}
+    cap_add:
+      - SYS_ADMIN
+    ports:
+      - "9400:9400"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: ["gpu"]

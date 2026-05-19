@@ -65,6 +65,14 @@ def test_vllm_inter_token_query_supports_current_and_legacy_metric_names() -> No
     assert "vllm:time_per_output_token_seconds_bucket" in query
 
 
+def test_gpu_queries_include_dcgm_utilization_and_memory_metrics() -> None:
+    assert "DCGM_FI_DEV_GPU_UTIL" in PROMETHEUS_QUERIES["gpu_utilization_percent"]
+    assert "DCGM_FI_DEV_FB_USED" in PROMETHEUS_QUERIES["gpu_memory_used_mebibytes"]
+    assert "DCGM_FI_DEV_FB_FREE" in PROMETHEUS_QUERIES["gpu_memory_free_mebibytes"]
+    assert "DCGM_FI_DEV_FB_USED" in PROMETHEUS_QUERIES["gpu_memory_used_percent"]
+    assert "DCGM_FI_DEV_FB_FREE" in PROMETHEUS_QUERIES["gpu_memory_used_percent"]
+
+
 def test_sample_values_extracts_numeric_values_only() -> None:
     samples = [
         {"value": 1.0},

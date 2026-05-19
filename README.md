@@ -25,7 +25,7 @@ without claiming to be a full enterprise GPU scheduler.
 | --- | --- |
 | AI platform engineering | OpenAI-compatible Gateway, vLLM backend, streaming SSE, model routing, token-aware quotas |
 | Production operations | Redis rate limits, readiness/warmup, structured logs, Prometheus metrics, Grafana dashboards, alert rules |
-| Performance discipline | Direct-vs-Gateway benchmark runner, TTFT/ITL/p95/p99/error-rate reporting, local GPU benchmark report |
+| Performance discipline | Direct-vs-Gateway benchmark runner, TTFT/ITL/TPOT/p95/p99/error-rate reporting, local GPU benchmark report |
 | Deployment maturity | Docker Compose, K8s overlays, Helm chart, Argo CD examples, Terraform entry point |
 | Delivery hygiene | CI, GHCR image publishing, Trivy/pip-audit, SBOM/provenance, Dependabot, SemVer release workflow |
 
@@ -41,10 +41,11 @@ without claiming to be a full enterprise GPU scheduler.
   and concurrent request limits.
 - Production-facing concerns around auth, request IDs, structured JSON logs,
   normalized errors, request size limits, readiness checks, and warmup.
-- Prometheus and Grafana observability for Gateway behavior and vLLM engine
-  metrics, plus alert rules for common Gateway and vLLM saturation signals.
+- Prometheus and Grafana observability for Gateway behavior, vLLM engine
+  metrics, and DCGM GPU utilization/memory, plus alert rules for common Gateway
+  and vLLM saturation signals.
 - Benchmark tooling for latency, TTFT, inter-token latency, throughput, error
-  rate, and Gateway overhead.
+  rate, tokenizer-level output tokens, TPOT, and Gateway overhead.
 - Deployment assets for Docker Compose, Kubernetes overlays, and Helm values.
 - GitOps examples for Argo CD, backed by a GHCR container image workflow.
 - Supply-chain security checks with dependency audit, Trivy scans, SBOM output,
@@ -65,6 +66,8 @@ flowchart LR
     Platform --> Redis["Redis<br/>RPM, TPM, concurrency"]
     Platform --> Prometheus["Prometheus"]
     Prometheus --> Grafana["Grafana dashboards"]
+    VLLM --> DCGM["DCGM exporter<br/>GPU util and memory"]
+    DCGM --> Prometheus
 ```
 
 The important design choice is the Gateway. vLLM handles model execution. The
@@ -199,6 +202,7 @@ uv run python benchmark/run_benchmark.py \
   --api-key local-vllm-key \
   --model Qwen/Qwen2.5-0.5B-Instruct \
   --prompts benchmark/prompts/short_prompts.jsonl \
+  --output-tokenizer-path D:/models/qwen-tokenizer.json \
   --timeout-seconds 120 \
   --stream true
 ```
@@ -222,6 +226,7 @@ uv run python benchmark/run_benchmark.py \
   --api-key dev-key \
   --model qwen-small \
   --prompts benchmark/prompts/short_prompts.jsonl \
+  --output-tokenizer-path D:/models/qwen-tokenizer.json \
   --timeout-seconds 120 \
   --stream true
 ```
@@ -238,8 +243,10 @@ uv run python benchmark/compare_results.py \
 ```
 
 The `portfolio` profile runs concurrency `1, 4, 8, 16, 32` with 100 measured
-requests per level and 10 warmup requests. Use `--profile stress` for 1000
-requests per level after the local GPU path is stable. See
+requests per level and 10 warmup requests. Supplying
+`--output-tokenizer-path` adds tokenizer-level output tokens/sec and TPOT. Use
+`--profile stress` for 1000 requests per level after the local GPU path is
+stable. See
 [docs/performance_benchmarking.md](docs/performance_benchmarking.md).
 
 ## Deployment Paths
@@ -247,9 +254,9 @@ requests per level after the local GPU path is stable. See
 | Target | Entry point | Purpose |
 | --- | --- | --- |
 | Docker Compose, no GPU | `docker-compose.yml` | Reproducible local demo |
-| Docker Compose, vLLM | `docker-compose.gpu.yml` | Local CUDA-backed serving |
+| Docker Compose, vLLM | `docker-compose.gpu.yml` | Local CUDA-backed serving plus DCGM GPU metrics |
 | Kubernetes base | `deploy/k8s` | Gateway, mock backend, Redis, Prometheus |
-| Kubernetes GPU overlay | `deploy/k8s-gpu` | Adds vLLM and vLLM metrics scraping |
+| Kubernetes GPU overlay | `deploy/k8s-gpu` | Adds vLLM, vLLM metrics, and DCGM scraping |
 | Helm | `deploy/helm` | Parameterized deployment skeleton |
 | GitOps / Argo CD | `deploy/gitops` | Continuous sync of the Helm release |
 | Terraform IaC | `deploy/terraform` | Namespace, Secrets boundary, and Argo CD Application |

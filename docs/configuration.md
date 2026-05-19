@@ -10,7 +10,7 @@ Helm deployments.
 | --- | --- | --- |
 | Local processes | `.env` copied from `.env.example` | Developer defaults for `uvicorn` and benchmark scripts |
 | Docker no-GPU | `docker-compose.yml` | Gateway, mock backend, Redis, Prometheus, alert rules, and Grafana |
-| Docker GPU | `docker-compose.gpu.yml` plus shell environment | Overrides Gateway to use vLLM and starts the vLLM container |
+| Docker GPU | `docker-compose.gpu.yml` plus shell environment | Overrides Gateway to use vLLM and starts vLLM plus DCGM exporter |
 | Kubernetes no-GPU | `deploy/k8s/gateway-config.yaml` and `deploy/k8s/gateway-secret.yaml` | Static manifests for the mock stack |
 | Kubernetes GPU | `deploy/k8s-gpu/*` patches and vLLM manifests | Adds vLLM and rewires Gateway to the vLLM service |
 | Helm | `deploy/helm/values.yaml` | Parameterized Kubernetes deployment for mock or vLLM mode |
@@ -66,6 +66,7 @@ These values configure the vLLM server itself. They are consumed by
 | `VLLM_USE_V1` | No | `0` | vLLM engine switch. `0` uses the v0 engine for local Docker compatibility. |
 | `VLLM_API_KEY` | Yes | `local-vllm-key` | API key enforced by vLLM and used by the Gateway. |
 | `HUGGING_FACE_HUB_TOKEN` | For gated models | empty | Token required to download gated Hugging Face models. |
+| `DCGM_EXPORTER_IMAGE` | No | `nvcr.io/nvidia/k8s/dcgm-exporter:3.3.9-3.6.1-ubuntu22.04` | DCGM exporter image used by the GPU Compose stack. |
 
 ## Model Alias Design
 
@@ -176,6 +177,11 @@ The included rules are intentionally SLO-oriented rather than exhaustive:
 
 Helm keeps alerting enabled by default and exposes thresholds under
 `prometheus.alerting` in `deploy/helm/values.yaml`.
+
+The GPU Compose override also starts `dcgm-exporter` on port `9400`.
+`monitoring/prometheus/prometheus.gpu.yml` scrapes it for GPU utilization and
+framebuffer memory metrics. Helm exposes the same path through
+`dcgmExporter.enabled`.
 
 ## Backend Mode Checklist
 
