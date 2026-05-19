@@ -75,6 +75,21 @@ uv run python benchmark/generate_report.py \
   --output docs/benchmark_report.md
 ```
 
+## Prometheus Snapshot
+
+After a benchmark run, collect a Gateway and vLLM metrics snapshot from
+Prometheus:
+
+```bash
+uv run python benchmark/collect_prometheus_snapshot.py \
+  --prometheus-url http://localhost:9090
+```
+
+The snapshot is written to `benchmark/results/prometheus_snapshot_*.json`. It
+includes Gateway request/error rate, Gateway latency and TTFT queries, vLLM
+running/waiting request gauges, KV cache usage, token throughput, and vLLM
+latency histogram queries.
+
 ## Recorded Metrics
 
 The benchmark runner records:

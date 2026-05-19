@@ -83,11 +83,11 @@ requests per concurrency level:
 
 | Concurrency | Direct RPS | Gateway RPS | Direct P95 Latency | Gateway P95 Latency | Gateway P50 TTFT |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | 1.15 | 1.47 | 1630.03 ms | 1242.91 ms | 46.38 ms |
-| 4 | 3.77 | 4.71 | 1973.45 ms | 1524.16 ms | 61.33 ms |
-| 8 | 6.32 | 7.75 | 2222.24 ms | 1798.30 ms | 70.76 ms |
-| 16 | 8.82 | 11.34 | 3022.67 ms | 2469.14 ms | 79.86 ms |
-| 32 | 11.09 | 14.53 | 4901.53 ms | 3960.98 ms | 205.41 ms |
+| 1 | 1.73 | 1.85 | 1055.70 ms | 968.79 ms | 40.46 ms |
+| 4 | 5.57 | 5.90 | 1271.02 ms | 1187.33 ms | 53.76 ms |
+| 8 | 9.28 | 9.49 | 1534.14 ms | 1458.64 ms | 57.36 ms |
+| 16 | 12.82 | 14.15 | 2179.11 ms | 2031.30 ms | 81.65 ms |
+| 32 | 17.17 | 17.08 | 3374.85 ms | 3297.35 ms | 114.42 ms |
 
 The report generator compares direct backend calls against Gateway-routed calls
 using the same prompt set, concurrency levels, stream mode, and token limits.
