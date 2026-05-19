@@ -4,10 +4,12 @@ import pytest
 
 from benchmark.compare_results import (
     BenchmarkRun,
+    PrometheusSnapshot,
     build_comparison_markdown,
     compare_runs,
     delta_percent,
     load_benchmark_run,
+    load_prometheus_snapshot,
 )
 
 
@@ -113,6 +115,63 @@ def test_build_comparison_markdown_renders_overhead_values() -> None:
     ) in report
 
 
+def test_build_comparison_markdown_renders_prometheus_snapshot() -> None:
+    direct_run = BenchmarkRun(
+        path=Path("direct.json"),
+        payload={
+            "base_url": "http://localhost:8000/v1",
+            "model": "backend",
+            "stream": True,
+            "requests_per_level": 10,
+            "summaries": [{"concurrency": 1, "rps": 1.0, "error_rate": 0.0}],
+        },
+    )
+    gateway_run = BenchmarkRun(
+        path=Path("gateway.json"),
+        payload={
+            "base_url": "http://localhost:8080/v1",
+            "model": "qwen-small",
+            "stream": True,
+            "requests_per_level": 10,
+            "summaries": [{"concurrency": 1, "rps": 1.0, "error_rate": 0.0}],
+        },
+    )
+    snapshot = PrometheusSnapshot(
+        path=Path("benchmark/results/prometheus_snapshot_1.json"),
+        payload={
+            "prometheus_url": "http://localhost:9090",
+            "collected_at": "2026-05-19T00:00:00+00:00",
+            "queries": {
+                "vllm_waiting_requests": {
+                    "status": "success",
+                    "samples": [
+                        {
+                            "metric": {"model_name": "qwen", "job": "vllm"},
+                            "value": 0.0,
+                        }
+                    ],
+                },
+                "vllm_kv_cache_usage_percent": {
+                    "status": "success",
+                    "samples": [],
+                },
+            },
+        },
+    )
+
+    report = build_comparison_markdown(
+        direct_run=direct_run,
+        gateway_run=gateway_run,
+        rows=compare_runs(direct_run, gateway_run),
+        generated_at="2026-05-19T00:00:00+00:00",
+        prometheus_snapshot=snapshot,
+    )
+
+    assert "## Prometheus Snapshot" in report
+    assert "| vllm_kv_cache_usage_percent | success | 0 | no samples |" in report
+    assert "| vllm_waiting_requests | success | 1 | model_name=qwen, job=vllm: 0.00 |" in report
+
+
 def test_delta_percent_handles_missing_or_zero_baseline() -> None:
     assert delta_percent(8.0, 10.0) == -0.2
     assert delta_percent(8.0, 0.0) is None
@@ -125,3 +184,11 @@ def test_load_benchmark_run_requires_summaries(tmp_path) -> None:
 
     with pytest.raises(ValueError, match="missing summaries"):
         load_benchmark_run(result_path)
+
+
+def test_load_prometheus_snapshot_requires_queries(tmp_path) -> None:
+    snapshot_path = tmp_path / "snapshot.json"
+    snapshot_path.write_text("{}", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="missing queries"):
+        load_prometheus_snapshot(snapshot_path)

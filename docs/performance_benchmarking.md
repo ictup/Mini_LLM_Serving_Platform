@@ -64,6 +64,7 @@ uv run python benchmark/run_benchmark.py \
 uv run python benchmark/compare_results.py \
   --direct-result benchmark/results/<direct-result>.json \
   --gateway-result benchmark/results/<gateway-result>.json \
+  --prometheus-snapshot benchmark/results/<prometheus-snapshot>.json \
   --output docs/gateway_overhead_report.md
 ```
 
@@ -89,6 +90,9 @@ The snapshot is written to `benchmark/results/prometheus_snapshot_*.json`. It
 includes Gateway request/error rate, Gateway latency and TTFT queries, vLLM
 running/waiting request gauges, KV cache usage, token throughput, and vLLM
 latency histogram queries.
+
+Pass the snapshot path to `benchmark/compare_results.py` to include a
+point-in-time metrics table in `docs/gateway_overhead_report.md`.
 
 ## Recorded Metrics
 

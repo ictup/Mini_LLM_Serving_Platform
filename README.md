@@ -214,6 +214,7 @@ Generate the comparison report:
 uv run python benchmark/compare_results.py \
   --direct-result benchmark/results/<direct-result>.json \
   --gateway-result benchmark/results/<gateway-result>.json \
+  --prometheus-snapshot benchmark/results/<prometheus-snapshot>.json \
   --output docs/gateway_overhead_report.md
 ```
 

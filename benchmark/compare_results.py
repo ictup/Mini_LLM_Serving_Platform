@@ -13,6 +13,12 @@ class BenchmarkRun:
 
 
 @dataclass(frozen=True)
+class PrometheusSnapshot:
+    path: Path
+    payload: dict[str, Any]
+
+
+@dataclass(frozen=True)
 class ComparisonRow:
     concurrency: int
     direct_summary: dict[str, Any]
@@ -23,6 +29,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Compare direct backend and Gateway benchmarks.")
     parser.add_argument("--direct-result", required=True)
     parser.add_argument("--gateway-result", required=True)
+    parser.add_argument("--prometheus-snapshot")
     parser.add_argument("--output", default="docs/gateway_overhead_report.md")
     return parser.parse_args()
 
@@ -34,6 +41,15 @@ def load_benchmark_run(path: Path) -> BenchmarkRun:
     if not isinstance(payload.get("summaries"), list):
         raise ValueError(f"benchmark result missing summaries list: {path}")
     return BenchmarkRun(path=path, payload=payload)
+
+
+def load_prometheus_snapshot(path: Path) -> PrometheusSnapshot:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"Prometheus snapshot must be a JSON object: {path}")
+    if not isinstance(payload.get("queries"), dict):
+        raise ValueError(f"Prometheus snapshot missing queries object: {path}")
+    return PrometheusSnapshot(path=path, payload=payload)
 
 
 def compare_runs(direct_run: BenchmarkRun, gateway_run: BenchmarkRun) -> list[ComparisonRow]:
@@ -70,6 +86,7 @@ def build_comparison_markdown(
     gateway_run: BenchmarkRun,
     rows: list[ComparisonRow],
     generated_at: str,
+    prometheus_snapshot: PrometheusSnapshot | None = None,
 ) -> str:
     lines = [
         "# Gateway Overhead Report",
@@ -99,6 +116,9 @@ def build_comparison_markdown(
     for row in rows:
         lines.append(comparison_row(row))
 
+    if prometheus_snapshot is not None:
+        lines.extend(prometheus_snapshot_section(prometheus_snapshot))
+
     lines.extend(
         [
             "",
@@ -116,6 +136,96 @@ def build_comparison_markdown(
         ]
     )
     return "\n".join(lines)
+
+
+def prometheus_snapshot_section(snapshot: PrometheusSnapshot) -> list[str]:
+    payload = snapshot.payload
+    lines = [
+        "",
+        "## Prometheus Snapshot",
+        "",
+        "| Snapshot File | Prometheus URL | Collected At |",
+        "| --- | --- | --- |",
+        markdown_row(
+            [
+                display_path(snapshot.path),
+                str(payload.get("prometheus_url", "n/a")),
+                str(payload.get("collected_at", "n/a")),
+            ]
+        ),
+        "",
+        "| Metric | Status | Samples | Values |",
+        "| --- | --- | ---: | --- |",
+    ]
+
+    queries = payload.get("queries", {})
+    if isinstance(queries, dict):
+        for metric_name in sorted(queries):
+            result = queries[metric_name]
+            if isinstance(result, dict):
+                lines.append(prometheus_metric_row(metric_name, result))
+
+    lines.extend(
+        [
+            "",
+            "Prometheus snapshot values are point-in-time query results collected after the "
+            "benchmark run. Empty samples usually mean the metric was absent, had no data in "
+            "the query window, or is not exposed by the current backend/version.",
+        ]
+    )
+    return lines
+
+
+def prometheus_metric_row(metric_name: str, result: dict[str, Any]) -> str:
+    samples = result.get("samples")
+    sample_count = len(samples) if isinstance(samples, list) else 0
+    return markdown_row(
+        [
+            metric_name,
+            str(result.get("status", "unknown")),
+            str(sample_count),
+            format_prometheus_samples(samples),
+        ]
+    )
+
+
+def format_prometheus_samples(samples: Any) -> str:
+    if not isinstance(samples, list) or not samples:
+        return "no samples"
+
+    formatted_samples = [
+        format_prometheus_sample(sample)
+        for sample in samples
+        if isinstance(sample, dict)
+    ]
+    if not formatted_samples:
+        return "no samples"
+    return "<br>".join(formatted_samples)
+
+
+def format_prometheus_sample(sample: dict[str, Any]) -> str:
+    value = sample.get("value")
+    metric = sample.get("metric")
+    labels = format_prometheus_labels(metric)
+    formatted_value = format_float(value)
+    if labels == "none":
+        return formatted_value
+    return f"{labels}: {formatted_value}"
+
+
+def format_prometheus_labels(metric: Any) -> str:
+    if not isinstance(metric, dict):
+        return "none"
+
+    label_keys = ("model", "backend_model", "model_name", "job", "instance")
+    labels = [
+        f"{key}={metric[key]}"
+        for key in label_keys
+        if isinstance(metric.get(key), str)
+    ]
+    if not labels:
+        return "none"
+    return ", ".join(labels)
 
 
 def run_row(label: str, run: BenchmarkRun) -> str:
@@ -231,6 +341,7 @@ def write_comparison_report(
     direct_run: BenchmarkRun,
     gateway_run: BenchmarkRun,
     output_path: Path,
+    prometheus_snapshot: PrometheusSnapshot | None = None,
 ) -> Path:
     rows = compare_runs(direct_run, gateway_run)
     generated_at = datetime.now(tz=UTC).isoformat(timespec="seconds")
@@ -239,6 +350,7 @@ def write_comparison_report(
         gateway_run=gateway_run,
         rows=rows,
         generated_at=generated_at,
+        prometheus_snapshot=prometheus_snapshot,
     )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(report, encoding="utf-8")
@@ -250,7 +362,17 @@ def main() -> None:
     args = parse_args()
     direct_run = load_benchmark_run(Path(args.direct_result))
     gateway_run = load_benchmark_run(Path(args.gateway_result))
-    write_comparison_report(direct_run, gateway_run, Path(args.output))
+    prometheus_snapshot = (
+        load_prometheus_snapshot(Path(args.prometheus_snapshot))
+        if args.prometheus_snapshot
+        else None
+    )
+    write_comparison_report(
+        direct_run,
+        gateway_run,
+        Path(args.output),
+        prometheus_snapshot=prometheus_snapshot,
+    )
 
 
 if __name__ == "__main__":
