@@ -36,6 +36,7 @@ class BenchmarkRequestResult:
     ok: bool
     status_code: int | None
     error: str | None = None
+    error_code: str | None = None
     ttft_seconds: float | None = None
     inter_token_latencies_seconds: tuple[float, ...] = ()
     output_event_count: int = 0
@@ -48,6 +49,8 @@ class BenchmarkSummary:
     success_count: int
     error_count: int
     error_rate: float
+    error_status_counts: dict[str, int]
+    error_code_counts: dict[str, int]
     rps: float
     p50_latency_ms: float | None
     p95_latency_ms: float | None
@@ -238,11 +241,13 @@ async def send_chat_completion_request(
         )
         latency_seconds = time.perf_counter() - started_at
         if response.status_code >= 400:
+            error_text = response.text[:200]
             return BenchmarkRequestResult(
                 latency_seconds=latency_seconds,
                 ok=False,
                 status_code=response.status_code,
-                error=response.text[:200],
+                error=error_text,
+                error_code=extract_error_code(error_text),
             )
         response.json()
         return BenchmarkRequestResult(
@@ -256,6 +261,7 @@ async def send_chat_completion_request(
             ok=False,
             status_code=None,
             error=type(exc).__name__,
+            error_code=type(exc).__name__,
         )
 
 
@@ -289,6 +295,7 @@ async def send_streaming_chat_completion_request(
                     ok=False,
                     status_code=response.status_code,
                     error=body[:200],
+                    error_code=extract_error_code(body),
                 )
 
             async for line in response.aiter_lines():
@@ -325,6 +332,7 @@ async def send_streaming_chat_completion_request(
             ok=False,
             status_code=None,
             error=type(exc).__name__,
+            error_code=type(exc).__name__,
         )
 
 
@@ -361,6 +369,25 @@ def extract_stream_content(payload: str) -> str | None:
     return None
 
 
+def extract_error_code(payload: str) -> str | None:
+    try:
+        error_response = json.loads(payload)
+    except json.JSONDecodeError:
+        return None
+
+    if not isinstance(error_response, dict):
+        return None
+
+    error = error_response.get("error")
+    if not isinstance(error, dict):
+        return None
+
+    code = error.get("code")
+    if isinstance(code, str) and code:
+        return code
+    return None
+
+
 def summarize_results(
     concurrency: int,
     results: list[BenchmarkRequestResult],
@@ -382,6 +409,8 @@ def summarize_results(
     error_count = total_requests - success_count
     error_rate = error_count / total_requests if total_requests else 0.0
     rps = total_requests / duration_seconds if duration_seconds > 0 else 0.0
+    error_status_counts = count_error_statuses(results)
+    error_code_counts = count_error_codes(results)
 
     return BenchmarkSummary(
         concurrency=concurrency,
@@ -389,6 +418,8 @@ def summarize_results(
         success_count=success_count,
         error_count=error_count,
         error_rate=error_rate,
+        error_status_counts=error_status_counts,
+        error_code_counts=error_code_counts,
         rps=rps,
         p50_latency_ms=percentile_ms(successful_latencies, 50),
         p95_latency_ms=percentile_ms(successful_latencies, 95),
@@ -431,6 +462,26 @@ def rate_per_second(count: int, duration_seconds: float) -> float | None:
     if duration_seconds <= 0:
         return None
     return round(count / duration_seconds, 2)
+
+
+def count_error_statuses(results: list[BenchmarkRequestResult]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for result in results:
+        if result.ok:
+            continue
+        key = str(result.status_code) if result.status_code is not None else "exception"
+        counts[key] = counts.get(key, 0) + 1
+    return counts
+
+
+def count_error_codes(results: list[BenchmarkRequestResult]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for result in results:
+        if result.ok:
+            continue
+        key = result.error_code or result.error or "unknown"
+        counts[key] = counts.get(key, 0) + 1
+    return counts
 
 
 async def run_benchmark(args: argparse.Namespace) -> list[BenchmarkSummary]:
@@ -487,6 +538,8 @@ def print_summary_row(summary: BenchmarkSummary) -> None:
     p95_itl = format_optional_float(summary.p95_itl_ms)
     mean_itl = format_optional_float(summary.mean_itl_ms)
     output_rate = format_optional_float(summary.output_events_per_second)
+    error_statuses = format_count_map(summary.error_status_counts)
+    error_codes = format_count_map(summary.error_code_counts)
     print(
         f"concurrency={summary.concurrency} total={summary.total_requests} "
         f"ok={summary.success_count} errors={summary.error_count} "
@@ -494,7 +547,8 @@ def print_summary_row(summary: BenchmarkSummary) -> None:
         f"p50_ttft_ms={p50_ttft} p95_ttft_ms={p95_ttft} p99_ttft_ms={p99_ttft} "
         f"p50_itl_ms={p50_itl} p95_itl_ms={p95_itl} mean_itl_ms={mean_itl} "
         f"output_events_per_second={output_rate} output_events={summary.output_event_count} "
-        f"error_rate={summary.error_rate:.2%}"
+        f"error_rate={summary.error_rate:.2%} error_statuses={error_statuses} "
+        f"error_codes={error_codes}"
     )
 
 
@@ -502,6 +556,12 @@ def format_optional_float(value: float | None) -> str:
     if value is None:
         return "n/a"
     return f"{value:.2f}"
+
+
+def format_count_map(value: dict[str, int]) -> str:
+    if not value:
+        return "none"
+    return ",".join(f"{key}:{value[key]}" for key in sorted(value))
 
 
 def write_results(args: argparse.Namespace, summaries: list[BenchmarkSummary]) -> Path:

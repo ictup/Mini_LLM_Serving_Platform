@@ -38,6 +38,8 @@ def test_build_markdown_report_renders_run_summary_and_metrics() -> None:
                     "mean_itl_ms": 0.04,
                     "output_events_per_second": 15.80,
                     "output_event_count": 15,
+                    "error_status_counts": {},
+                    "error_code_counts": {},
                     "duration_seconds": 0.9494,
                 }
             ],
@@ -56,11 +58,12 @@ def test_build_markdown_report_renders_run_summary_and_metrics() -> None:
     ) in report
     assert (
         "| 1 | 3 | 3 | 0 | 3.16 | 277.39 | 383.37 | 401.11 | 276.41 | "
-        "382.25 | 398.17 | 0.03 | 0.06 | 0.04 | 15.80 | 15 | 0.00% |"
+        "382.25 | 398.17 | 0.03 | 0.06 | 0.04 | 15.80 | 15 | 0.00% | none | none |"
     ) in report
     assert "P99 Latency" in report
     assert "P99 TTFT" in report
     assert "P95 ITL" in report
+    assert "Error Codes" in report
     assert "Output events count SSE chunks" in report
 
 

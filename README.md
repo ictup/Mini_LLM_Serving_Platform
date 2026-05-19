@@ -181,6 +181,16 @@ uv run python benchmark/run_benchmark.py \
 
 Run through the Gateway:
 
+For a serving-capacity benchmark, raise the local demo quota before starting
+the Docker stack:
+
+```powershell
+$env:RATE_LIMIT_RPM="10000"
+$env:RATE_LIMIT_TPM="2000000"
+$env:RATE_LIMIT_CONCURRENT_REQUESTS="64"
+docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build
+```
+
 ```bash
 uv run python benchmark/run_benchmark.py \
   --profile portfolio \

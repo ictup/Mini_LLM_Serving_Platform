@@ -18,6 +18,8 @@ without changing the concurrency plan.
 
 ## Direct vLLM Run
 
+Direct vLLM does not pass through Gateway rate limiting:
+
 ```bash
 uv run python benchmark/run_benchmark.py \
   --profile portfolio \
@@ -30,6 +32,20 @@ uv run python benchmark/run_benchmark.py \
 ```
 
 ## Gateway Run
+
+For Gateway capacity benchmarking, raise the local demo rate limits before
+starting Compose. Otherwise the default `RATE_LIMIT_RPM=60` and
+`RATE_LIMIT_TPM=60000` will intentionally reject the portfolio profile:
+
+```powershell
+$env:RATE_LIMIT_RPM="10000"
+$env:RATE_LIMIT_TPM="2000000"
+$env:RATE_LIMIT_CONCURRENT_REQUESTS="64"
+docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build
+```
+
+This keeps rate limiting implemented and observable while preventing tenant
+quota settings from dominating a raw serving-capacity benchmark.
 
 ```bash
 uv run python benchmark/run_benchmark.py \
@@ -64,6 +80,7 @@ uv run python benchmark/generate_report.py \
 The benchmark runner records:
 
 - RPS and error rate.
+- Error status-code and OpenAI error-code distributions.
 - P50, P95, and P99 end-to-end latency.
 - P50, P95, and P99 TTFT for streaming runs.
 - P50, P95, and mean inter-token latency proxy.
@@ -79,6 +96,9 @@ tokens. Tokenizer-accurate output tokens/sec is a later enhancement.
 A good portfolio benchmark should show:
 
 - Zero or near-zero error rate at low and moderate concurrency.
+- If errors appear, the `error_codes` field should make the cause explicit, for
+  example `rate_limit_exceeded`, `token_rate_limit_exceeded`, backend errors,
+  or client timeouts.
 - Gateway RPS close to direct vLLM RPS.
 - Gateway P95/P99 latency close to direct vLLM latency.
 - Stable TTFT under increasing concurrency.

@@ -5,6 +5,7 @@ import pytest
 from benchmark.run_benchmark import (
     BenchmarkRequestResult,
     apply_profile_defaults,
+    extract_error_code,
     extract_stream_content,
     load_prompt_records,
     normalize_prompt_record,
@@ -31,6 +32,7 @@ def test_summarize_results_counts_success_errors_and_rps() -> None:
                 ok=False,
                 status_code=500,
                 error="backend error",
+                error_code="backend_error",
             ),
         ],
     )
@@ -42,6 +44,8 @@ def test_summarize_results_counts_success_errors_and_rps() -> None:
     assert summary.rps == 1.5
     assert summary.p50_latency_ms == 150.0
     assert summary.p99_latency_ms == 199.0
+    assert summary.error_status_counts == {"500": 1}
+    assert summary.error_code_counts == {"backend_error": 1}
 
 
 def test_summarize_results_includes_streaming_metrics() -> None:
@@ -108,6 +112,13 @@ def test_extract_stream_content_reads_delta_content() -> None:
 
     assert extract_stream_content(payload) == "hello"
     assert extract_stream_content("[DONE]") is None
+
+
+def test_extract_error_code_reads_openai_error_envelope() -> None:
+    payload = '{"error":{"message":"rate limit exceeded","code":"rate_limit_exceeded"}}'
+
+    assert extract_error_code(payload) == "rate_limit_exceeded"
+    assert extract_error_code("not json") is None
 
 
 def test_normalize_prompt_record_accepts_prompt() -> None:

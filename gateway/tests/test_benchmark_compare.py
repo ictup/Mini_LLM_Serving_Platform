@@ -88,6 +88,7 @@ def test_build_comparison_markdown_renders_overhead_values() -> None:
                     "p50_ttft_ms": 55.0,
                     "p95_ttft_ms": 90.0,
                     "error_rate": 0.1,
+                    "error_code_counts": {"rate_limit_exceeded": 1},
                 }
             ],
         },
@@ -107,7 +108,8 @@ def test_build_comparison_markdown_renders_overhead_values() -> None:
     assert "| 1 | 10.00 | 8.00 | -20.00% | 100.00 | 120.00 | 20.00 |" in report
     assert (
         "150.00 | 180.00 | 30.00 | 190.00 | 210.00 | 20.00 | "
-        "40.00 | 55.00 | 15.00 | 60.00 | 90.00 | 30.00 | 10.00 pp"
+        "40.00 | 55.00 | 15.00 | 60.00 | 90.00 | 30.00 | 10.00 pp | "
+        "rate_limit_exceeded: 1"
     ) in report
 
 

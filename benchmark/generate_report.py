@@ -95,9 +95,9 @@ def build_markdown_report(
                 "| Concurrency | Total | Success | Errors | RPS | P50 Latency (ms) | "
                 "P95 Latency (ms) | P99 Latency (ms) | P50 TTFT (ms) | P95 TTFT (ms) | "
                 "P99 TTFT (ms) | P50 ITL (ms) | P95 ITL (ms) | Mean ITL (ms) | "
-                "Output Events/s | Output Events | Error Rate |",
+                "Output Events/s | Output Events | Error Rate | Error Statuses | Error Codes |",
                 "| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | "
-                "---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+                "---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |",
             ]
         )
         for summary in result_file.payload["summaries"]:
@@ -141,6 +141,8 @@ def summary_cells(summary: dict[str, Any]) -> list[str]:
         format_float(output_events_per_second(summary)),
         format_integer(summary.get("output_event_count")),
         format_percent(summary.get("error_rate")),
+        format_count_map(summary.get("error_status_counts")),
+        format_count_map(summary.get("error_code_counts")),
     ]
 
 
@@ -200,6 +202,13 @@ def format_percent(value: Any) -> str:
     if isinstance(value, int | float):
         return f"{value * 100:.2f}%"
     return "n/a"
+
+
+def format_count_map(value: Any) -> str:
+    if not isinstance(value, dict) or not value:
+        return "none"
+    items = [(str(key), item_value) for key, item_value in value.items()]
+    return ", ".join(f"{key}: {item_value}" for key, item_value in sorted(items))
 
 
 def write_report(result_files: list[BenchmarkResultFile], output_path: Path) -> Path:
