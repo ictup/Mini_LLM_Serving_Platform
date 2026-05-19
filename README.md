@@ -46,6 +46,12 @@ Copy `.env.example` to `.env` for local process development. For Docker,
 Kubernetes, and Helm deployments, see the configuration matrix in
 `docs/configuration.md`.
 
+## API usage
+
+The Gateway exposes OpenAI-compatible `/v1/models` and `/v1/chat/completions`
+endpoints. See `docs/api_usage.md` for curl examples, Python SDK examples,
+streaming usage, error responses, and health check behavior.
+
 ## Docker Compose no-GPU stack
 
 Start the local reproducible stack:
