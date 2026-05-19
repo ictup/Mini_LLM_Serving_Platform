@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 env:
-  TRIVY_VERSION: "0.58.1"
+  TRIVY_VERSION: "0.70.0"
 
 jobs:
   dependency-audit:

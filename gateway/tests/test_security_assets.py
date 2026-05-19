@@ -14,7 +14,7 @@ def test_security_workflow_runs_dependency_audit_and_trivy_scans() -> None:
     assert "pull_request:" in workflow
     assert "schedule:" in workflow
     assert "uv run --with pip-audit pip-audit --strict" in workflow
-    assert 'TRIVY_VERSION: "0.58.1"' in workflow
+    assert 'TRIVY_VERSION: "0.70.0"' in workflow
     assert "trivy --version" in workflow
     assert "--scanners vuln,secret,misconfig" in workflow
     assert "docker/build-push-action@v6" in workflow
