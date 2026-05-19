@@ -47,7 +47,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Trivy repository scan
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.28.0
         with:
           scan-type: fs
           scan-ref: .
@@ -85,7 +85,7 @@ jobs:
           tags: mini-llm-serving-platform:security-scan
 
       - name: Run Trivy image scan
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.28.0
         with:
           image-ref: mini-llm-serving-platform:security-scan
           format: sarif
@@ -102,7 +102,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Generate CycloneDX SBOM
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.28.0
         with:
           image-ref: mini-llm-serving-platform:security-scan
           format: cyclonedx
