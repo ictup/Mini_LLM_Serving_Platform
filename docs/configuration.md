@@ -30,6 +30,10 @@ Helm deployments.
 | `RATE_LIMIT_CONCURRENT_REQUESTS` | No | `20` | Simultaneous in-flight chat requests allowed for each API key. |
 | `RATE_LIMIT_DEFAULT_COMPLETION_TOKENS` | No | `256` | Output-token budget reserved when a request omits `max_tokens`. |
 | `REDIS_URL` | When rate limiting is enabled | `redis://localhost:6379/0` | Redis connection URL used by the rate limiter. |
+| `MAX_REQUEST_BODY_BYTES` | No | `1048576` | Maximum accepted HTTP request body size. Oversized requests return `413`. |
+| `MAX_CHAT_MESSAGES` | No | `64` | Maximum number of messages in one chat completion request. |
+| `MAX_CHAT_MESSAGE_CHARS` | No | `16000` | Maximum character count for a single chat message content field. |
+| `MAX_CHAT_TOTAL_MESSAGE_CHARS` | No | `64000` | Maximum combined character count across all chat message content fields. |
 | `BACKEND_TYPE` | No | `mock` | Selects `mock` or `vllm` backend routing. |
 | `MOCK_BASE_URL` | In mock mode | `http://localhost:9000/v1` | OpenAI-compatible mock backend base URL. |
 | `VLLM_BASE_URL` | In vLLM mode | `http://localhost:8000/v1` | OpenAI-compatible vLLM backend base URL. |

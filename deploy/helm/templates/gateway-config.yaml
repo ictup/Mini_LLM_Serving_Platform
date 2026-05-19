@@ -15,6 +15,10 @@ data:
   RATE_LIMIT_CONCURRENT_REQUESTS: {{ .Values.gateway.rateLimit.concurrentRequests | quote }}
   RATE_LIMIT_DEFAULT_COMPLETION_TOKENS: {{ .Values.gateway.rateLimit.defaultCompletionTokens | quote }}
   REDIS_URL: redis://redis:{{ .Values.redis.service.port }}/0
+  MAX_REQUEST_BODY_BYTES: {{ .Values.gateway.requestLimits.maxBodyBytes | int | quote }}
+  MAX_CHAT_MESSAGES: {{ .Values.gateway.requestLimits.maxChatMessages | int | quote }}
+  MAX_CHAT_MESSAGE_CHARS: {{ .Values.gateway.requestLimits.maxChatMessageChars | int | quote }}
+  MAX_CHAT_TOTAL_MESSAGE_CHARS: {{ .Values.gateway.requestLimits.maxChatTotalMessageChars | int | quote }}
   METRICS_ENABLED: "true"
   {{- if .Values.vllm.enabled }}
   BACKEND_TYPE: vllm

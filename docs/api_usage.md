@@ -154,6 +154,15 @@ Supported request fields:
 
 Allowed message roles are `system`, `user`, `assistant`, and `tool`.
 
+The Gateway also enforces operational input limits before forwarding requests:
+
+| Limit | Default | Error code |
+| --- | --- | --- |
+| HTTP request body bytes | `1048576` | `request_body_too_large` with status `413` |
+| Chat messages per request | `64` | `too_many_messages` |
+| Characters in one message | `16000` | `chat_message_too_large` |
+| Total message characters | `64000` | `chat_messages_too_large` |
+
 ## Streaming Chat Completion
 
 Set `stream` to `true` to receive Server-Sent Events:
@@ -264,6 +273,11 @@ Rate limits return `429`. Request-per-minute limits use
 `code=rate_limit_exceeded`; estimated token-per-minute limits use
 `code=token_rate_limit_exceeded`; in-flight request limits use
 `code=concurrent_request_limit_exceeded`.
+
+Input safety limits use the same envelope. An oversized HTTP body returns
+`413` with `code=request_body_too_large`. Parsed chat requests that exceed
+message count or character limits return `400` with the relevant code listed in
+the chat completion section.
 
 ## Metrics
 

@@ -213,6 +213,39 @@ Fixes:
 - Disable rate limiting for isolated local E2E tests when Redis is not part of
   the scenario.
 
+## Request Rejected as Too Large
+
+Symptoms:
+
+- Client receives `413` with `code=request_body_too_large`.
+- Client receives `400` with `code=too_many_messages`,
+  `code=chat_message_too_large`, or `code=chat_messages_too_large`.
+- The backend does not receive the request.
+
+Likely causes:
+
+- The serialized JSON body is larger than `MAX_REQUEST_BODY_BYTES`.
+- The request includes too many chat messages.
+- One message content field is larger than `MAX_CHAT_MESSAGE_CHARS`.
+- The combined message content is larger than
+  `MAX_CHAT_TOTAL_MESSAGE_CHARS`.
+
+Checks:
+
+```bash
+curl -i http://localhost:8080/v1/chat/completions \
+  -H "Authorization: Bearer dev-key" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"mock","messages":[{"role":"user","content":"hello"}]}'
+```
+
+Fixes:
+
+- Reduce retrieved RAG context before sending it to the Gateway.
+- Split very large prompts into smaller requests when the workflow allows it.
+- Increase the relevant `MAX_*` setting only after confirming the backend and
+  rate limits can handle the larger workload.
+
 ## High p95 Latency
 
 Symptoms:

@@ -14,6 +14,11 @@ gateway:
     tpm: 60000
     concurrentRequests: 20
     defaultCompletionTokens: 256
+  requestLimits:
+    maxBodyBytes: 1048576
+    maxChatMessages: 64
+    maxChatMessageChars: 16000
+    maxChatTotalMessageChars: 64000
   service:
     port: 8080
   modelAliasesJson: '{"mock":"mock","qwen-small":"mock"}'

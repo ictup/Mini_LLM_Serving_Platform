@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     rate_limit_concurrent_requests: int = Field(default=20, gt=0)
     rate_limit_default_completion_tokens: int = Field(default=256, gt=0)
     redis_url: str = "redis://localhost:6379/0"
+    max_request_body_bytes: int = Field(default=1_048_576, gt=0)
+    max_chat_messages: int = Field(default=64, gt=0)
+    max_chat_message_chars: int = Field(default=16_000, gt=0)
+    max_chat_total_message_chars: int = Field(default=64_000, gt=0)
 
     gateway_host: str = "0.0.0.0"
     gateway_port: int = 8080

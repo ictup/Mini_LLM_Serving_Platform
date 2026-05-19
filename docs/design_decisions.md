@@ -13,6 +13,7 @@ usually sit around an inference engine:
 - API key authentication.
 - Request IDs for tracing.
 - Rate limiting.
+- Request and input size limits.
 - Stable model aliases.
 - Error normalization.
 - User-facing metrics.
@@ -82,6 +83,22 @@ The current implementation enforces request-per-minute, estimated
 token-per-minute, and concurrent in-flight request limits. Concurrent limits are
 released when non-streaming calls finish or when streaming responses finish
 iterating.
+
+## Why Add Request and Input Size Limits?
+
+LLM requests can become expensive before they reach the model. A very large
+HTTP body consumes Gateway parsing memory, and an extremely large `messages`
+array can waste validation, logging, rate-limit, and backend capacity.
+
+The Gateway therefore applies two layers:
+
+- A request body byte limit at middleware level, before request parsing.
+- Chat-specific message count and character limits after schema validation but
+  before rate limiting and backend calls.
+
+The second layer uses character counts instead of model tokenizers so it stays
+backend-neutral. Token-per-minute limiting still provides a separate estimated
+capacity guardrail.
 
 ## Why Prometheus and Grafana?
 

@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from gateway.app.core.config import Settings, get_settings
 from gateway.app.core.rate_limit import enforce_chat_rate_limit
 from gateway.app.core.request_id import get_request_id
+from gateway.app.core.request_limits import validate_chat_request_limits
 from gateway.app.core.security import require_api_key
 from gateway.app.observability.metrics import observe_streaming_chunks
 from gateway.app.proxy.backend_client import BackendClient, BackendClientError
@@ -28,6 +29,7 @@ async def create_chat_completion(
     api_key: APIKeyDependency,
 ) -> dict | JSONResponse | StreamingResponse:
     request_id = get_request_id(raw_request)
+    validate_chat_request_limits(request, settings)
     rate_limit_lease = await enforce_chat_rate_limit(
         settings=settings,
         api_key=api_key,

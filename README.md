@@ -35,6 +35,7 @@ docker compose up --build
 - Bearer API key authentication.
 - Request ID propagation with `X-Request-ID`.
 - Redis-backed per-API-key RPM, TPM, and concurrent request limiting.
+- Configurable request body and chat input size limits.
 - Structured JSON logging with `structlog`.
 - Prometheus metrics for request volume, errors, latency, and streaming behavior.
 - Configurable model aliases for stable client-facing names.

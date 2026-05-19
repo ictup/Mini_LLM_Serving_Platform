@@ -27,6 +27,7 @@ presented as fully benchmarked.
 | API key authentication | Done | `gateway/app/core/security.py` |
 | Request IDs | Done | `gateway/app/core/request_id.py` |
 | Redis RPM, TPM, and concurrent request limiting | Done | `gateway/app/core/rate_limit.py` |
+| Request body and chat input limits | Done | `gateway/app/core/request_limits.py` |
 | Structured logging | Done | `gateway/app/core/logging.py` |
 | Prometheus metrics | Done | `gateway/app/observability/metrics.py` |
 | Grafana dashboards | Done | `monitoring/grafana/dashboards/*` |
@@ -121,7 +122,6 @@ Use this checklist on a CUDA-capable host:
 
 ## Production Hardening Backlog
 
-- Add request body size limits and stricter validation for operational safety.
 - Add ingress/TLS examples and a deployment-specific secret management strategy.
 - Add HPA or queue-aware autoscaling recommendations.
 - Add model warmup and backend startup readiness behavior for real vLLM models.
