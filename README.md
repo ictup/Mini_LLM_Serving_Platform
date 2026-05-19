@@ -1,23 +1,43 @@
 # OpenAI-Compatible LLM Serving Gateway
 
-[![CI](https://github.com/ictup/Mini_LLM_Serving_Platform/actions/workflows/ci.yml/badge.svg)](https://github.com/ictup/Mini_LLM_Serving_Platform/actions/workflows/ci.yml)
-![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-OpenAI--compatible-009688?logo=fastapi&logoColor=white)
-![vLLM](https://img.shields.io/badge/vLLM-GPU%20serving-6A5ACD)
-![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
-![Kubernetes](https://img.shields.io/badge/Kubernetes%20%2B%20Helm-deployment-326CE5?logo=kubernetes&logoColor=white)
+[![CI](https://github.com/ictup/llm-serving-gateway-vllm/actions/workflows/ci.yml/badge.svg)](https://github.com/ictup/llm-serving-gateway-vllm/actions/workflows/ci.yml)
+[![Security](https://github.com/ictup/llm-serving-gateway-vllm/actions/workflows/security.yml/badge.svg)](https://github.com/ictup/llm-serving-gateway-vllm/actions/workflows/security.yml)
+[![Release](https://github.com/ictup/llm-serving-gateway-vllm/actions/workflows/release.yml/badge.svg)](https://github.com/ictup/llm-serving-gateway-vllm/actions/workflows/release.yml)
+[![Latest Release](https://img.shields.io/github/v/release/ictup/llm-serving-gateway-vllm?sort=semver)](https://github.com/ictup/llm-serving-gateway-vllm/releases)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](pyproject.toml)
+[![FastAPI](https://img.shields.io/badge/FastAPI-OpenAI--compatible-009688?logo=fastapi&logoColor=white)](gateway/app/main.py)
+[![vLLM](https://img.shields.io/badge/vLLM-GPU%20serving-6A5ACD)](docker-compose.gpu.yml)
+[![Kubernetes + Helm](https://img.shields.io/badge/Kubernetes%20%2B%20Helm-ready-326CE5?logo=kubernetes&logoColor=white)](deploy/helm)
+[![Observability](https://img.shields.io/badge/Observability-Prometheus%20%2B%20Grafana-orange)](monitoring)
 
-A production-style FastAPI gateway for OpenAI-compatible LLM serving. It sits
-in front of mock or vLLM backends and adds the platform features that are
-normally missing when a model server is exposed directly: API key auth, request
-IDs, model aliases, Redis-backed RPM/TPM/concurrency limits, structured logs,
-Prometheus metrics, Grafana dashboards, Docker Compose, Kubernetes, Helm,
-GitOps, Terraform, supply-chain checks, release automation, and direct-backend
-vs Gateway benchmark reports.
+Production-style FastAPI gateway for OpenAI-compatible LLM serving. It sits in
+front of mock or vLLM backends and adds the platform layer that a raw model
+server does not own: API keys, request IDs, model aliases, weighted routing,
+Redis-backed RPM/TPM/concurrency limits, streaming metrics, Prometheus,
+Grafana, GPU telemetry, Docker, Kubernetes, Helm, GitOps, Terraform,
+supply-chain checks, release automation, and repeatable direct-vs-gateway
+benchmarks.
 
-This is a portfolio infrastructure project. It is intentionally scoped to show
-how an LLM serving layer is designed, operated, benchmarked, and documented,
-without claiming to be a full enterprise GPU scheduler.
+This is a portfolio-grade AI infrastructure project. It is designed to show
+how an LLM serving gateway is built, operated, benchmarked, secured, and
+released without pretending to be a full enterprise GPU scheduler.
+
+## Why This Project Exists
+
+vLLM already exposes an OpenAI-compatible server. This project answers the
+next platform question: what do you put around that server when teams need a
+stable API contract, quotas, routing, metrics, deployment automation, and
+release discipline?
+
+The Gateway keeps those concerns outside model execution:
+
+- Clients call one OpenAI-compatible `/v1` API.
+- vLLM or the mock backend handles model responses.
+- Redis enforces RPM, TPM, and concurrent request limits.
+- Prometheus and Grafana expose request, streaming, vLLM, and GPU behavior.
+- Docker, Kubernetes, Helm, Argo CD, and Terraform describe deployment paths.
+- CI, security scans, SBOM/provenance, GHCR publishing, and SemVer releases
+  make the repository behave like a maintained production project.
 
 ## Recruiter Snapshot
 
@@ -25,96 +45,50 @@ without claiming to be a full enterprise GPU scheduler.
 | --- | --- |
 | AI platform engineering | OpenAI-compatible Gateway, vLLM backend, streaming SSE, model routing, token-aware quotas |
 | Production operations | Redis rate limits, readiness/warmup, structured logs, Prometheus metrics, Grafana dashboards, alert rules |
-| Performance discipline | Direct-vs-Gateway benchmark runner, TTFT/ITL/TPOT/p95/p99/error-rate reporting, local GPU benchmark report |
+| Performance discipline | Direct-vs-Gateway benchmark runner, TTFT, ITL, TPOT, p95/p99, error-rate, tokenizer-level output token metrics |
 | Deployment maturity | Docker Compose, K8s overlays, Helm chart, Argo CD examples, Terraform entry point |
 | Delivery hygiene | CI, GHCR image publishing, Trivy/pip-audit, SBOM/provenance, Dependabot, SemVer release workflow |
 
-## What This Demonstrates
+In short: this is not only an inference demo. It shows benchmarking,
+observability, and the platform scope recruiters expect:
+GitOps, Terraform, supply-chain checks, release automation.
 
-- OpenAI-compatible `/v1/models` and `/v1/chat/completions` APIs.
-- Streaming Server-Sent Events proxying with Time To First Token measurement.
-- A backend abstraction that can route to a reproducible no-GPU mock backend or
-  a real vLLM OpenAI-compatible server.
-- Optional weighted model routing for canary targets and backend-model
-  fallback.
-- Redis-backed per-key request rate limits, model-aware token-per-minute limits,
-  and concurrent request limits.
-- Production-facing concerns around auth, request IDs, structured JSON logs,
-  normalized errors, request size limits, readiness checks, and warmup.
-- Prometheus and Grafana observability for Gateway behavior, vLLM engine
-  metrics, and DCGM GPU utilization/memory, plus alert rules for common Gateway
-  and vLLM saturation signals.
-- Benchmark tooling for latency, TTFT, inter-token latency, throughput, error
-  rate, tokenizer-level output tokens, TPOT, and Gateway overhead.
-- Deployment assets for Docker Compose, Kubernetes overlays, and Helm values.
-- GitOps examples for Argo CD, backed by a GHCR container image workflow.
-- Supply-chain security checks with dependency audit, Trivy scans, SBOM output,
-  provenance attestations, and Dependabot update PRs.
-- Release engineering with SemVer tag validation, generated GitHub Releases,
-  versioned GHCR image tags, and changelog guidance.
-- CI coverage for Python checks, tests, Helm lint, and Helm rendering.
+## Feature Overview
+
+| Area | Implemented |
+| --- | --- |
+| API surface | `/v1/models`, `/v1/chat/completions`, OpenAI-compatible request/response schemas |
+| Streaming | Server-Sent Events proxying with time-to-first-token measurement |
+| Backends | No-GPU mock backend for CI and local demos, vLLM OpenAI server for CUDA serving |
+| Routing | Model aliases, backend model mapping, weighted canary routes, fallback targets |
+| Auth and safety | API key auth, request IDs, request body limits, chat message limits, normalized errors |
+| Rate limiting | Redis-backed RPM, tokenizer-aware TPM, and concurrent request limits |
+| Observability | Prometheus metrics, structured JSON logs, Grafana dashboards, alert rules |
+| GPU telemetry | DCGM exporter wiring for GPU utilization and framebuffer memory |
+| Benchmarking | Async direct-vLLM vs Gateway runs with RPS, latency, TTFT, ITL, TPOT, output tokens/sec, p95/p99, error rate |
+| Deployment | Docker Compose, Kubernetes base and GPU overlays, Helm, Argo CD, Terraform skeleton |
+| Supply chain | CI, Trivy, pip-audit, SBOM, provenance, Dependabot, GHCR image publishing |
+| Release engineering | SemVer validation, changelog, release workflow, versioned GitHub Releases |
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    Client["OpenAI SDK<br/>curl<br/>OpenAI-compatible client"] --> Gateway["FastAPI Gateway<br/>OpenAI-compatible API"]
-    Gateway --> Platform["Auth<br/>Request ID<br/>Model aliases<br/>Rate limits<br/>Metrics"]
-    Platform --> Router["Backend router"]
-    Router --> Mock["Mock backend<br/>No-GPU demo and CI"]
-    Router --> VLLM["vLLM OpenAI server<br/>CUDA path"]
+    Client["OpenAI SDK<br/>curl<br/>RAG app<br/>agent runtime"] --> Gateway["FastAPI Gateway<br/>OpenAI-compatible /v1 API"]
+    Gateway --> Platform["Platform controls<br/>auth, request ID<br/>limits, logs, metrics"]
+    Platform --> Router["Model router<br/>aliases, weights, fallback"]
+    Router --> Mock["Mock backend<br/>CI and no-GPU demo"]
+    Router --> VLLM["vLLM OpenAI server<br/>CUDA serving"]
     Platform --> Redis["Redis<br/>RPM, TPM, concurrency"]
-    Platform --> Prometheus["Prometheus"]
-    Prometheus --> Grafana["Grafana dashboards"]
+    Platform --> Prometheus["Prometheus<br/>Gateway and vLLM metrics"]
     VLLM --> DCGM["DCGM exporter<br/>GPU util and memory"]
     DCGM --> Prometheus
+    Prometheus --> Grafana["Grafana dashboards<br/>Gateway, vLLM, GPU"]
 ```
 
-The important design choice is the Gateway. vLLM handles model execution. The
-Gateway owns the stable client contract and platform behavior around it.
-
-## Verified State
-
-| Area | Status |
-| --- | --- |
-| No-GPU local path | Verified with mock backend and SDK smoke test |
-| GPU path | Verified locally with Docker Desktop and NVIDIA GPU |
-| CI | Python lint, tests, Helm lint, Helm template rendering |
-| Kubernetes | Base and GPU overlays render with Kustomize |
-| Helm | Mock and vLLM modes render successfully |
-| External RAG app wiring | Intentionally excluded from this completion |
-
-GPU validation snapshot from May 19, 2026:
-
-| Item | Value |
-| --- | --- |
-| GPU | NVIDIA GeForce RTX 4060 Laptop GPU, 8GB VRAM |
-| vLLM image | `vllm/vllm-openai:v0.8.5.post1` |
-| Served model | `Qwen/Qwen2.5-0.5B-Instruct` |
-| Gateway alias | `qwen-small` |
-| Result | Direct vLLM and Gateway streaming benchmarks completed with zero errors |
-
-Full details are in
-[docs/gateway_overhead_report.md](docs/gateway_overhead_report.md).
-
-## Benchmark Snapshot
-
-Portfolio profile on a local RTX 4060 Laptop GPU, using 100 measured streaming
-requests per concurrency level:
-
-| Concurrency | Direct RPS | Gateway RPS | Direct P95 Latency | Gateway P95 Latency | Gateway P50 TTFT |
-| ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | 1.73 | 1.98 | 1043.08 ms | 896.34 ms | 39.27 ms |
-| 4 | 5.71 | 6.31 | 1256.95 ms | 1119.99 ms | 50.63 ms |
-| 8 | 9.45 | 10.14 | 1474.63 ms | 1368.80 ms | 54.08 ms |
-| 16 | 13.58 | 14.19 | 2004.51 ms | 1902.34 ms | 70.16 ms |
-| 32 | 17.87 | 16.11 | 3121.88 ms | 3529.36 ms | 169.88 ms |
-
-The report generator compares direct backend calls against Gateway-routed calls
-using the same prompt set, concurrency levels, stream mode, and token limits.
-Both paths completed with zero errors. The Gateway-faster rows should be read
-as local run variance and no obvious Gateway bottleneck, not as proof that the
-Gateway accelerates vLLM.
+The important design choice is separation of concerns. vLLM executes the model;
+the Gateway owns client-facing policy, routing, limits, observability, and the
+operational contract.
 
 ## Quick Start: No GPU
 
@@ -132,13 +106,11 @@ uv run ruff check .
 uv run pytest
 ```
 
-Start the full local stack:
+Start the full no-GPU local stack:
 
 ```bash
 docker compose up --build
 ```
-
-Local services:
 
 | Service | URL |
 | --- | --- |
@@ -148,7 +120,7 @@ Local services:
 | Grafana | http://localhost:3000 |
 | Redis | `localhost:6379` |
 
-Grafana login defaults to `admin` / `admin`.
+Grafana defaults to `admin` / `admin`.
 
 ## Quick Start: GPU vLLM
 
@@ -172,8 +144,8 @@ uv run python benchmark/client_smoke_test.py
 ```
 
 The default GPU model is intentionally small because it has been validated on
-an 8GB laptop GPU. Larger models can be selected by overriding `VLLM_MODEL` on
-machines with enough free GPU memory.
+an 8GB RTX 4060 Laptop GPU. Larger models can be selected by overriding
+`VLLM_MODEL` on machines with enough free GPU memory.
 
 ## API Example
 
@@ -183,13 +155,38 @@ curl http://localhost:8080/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "mock",
-    "messages": [{"role": "user", "content": "Explain TTFT in one sentence."}],
+    "messages": [
+      {
+        "role": "user",
+        "content": "Explain TTFT in one sentence."
+      }
+    ],
     "stream": false
   }'
 ```
 
 For streaming examples, model listing, error shapes, and health checks, see
 [docs/api_usage.md](docs/api_usage.md).
+
+## Benchmark Snapshot
+
+Portfolio profile on a local RTX 4060 Laptop GPU with 100 measured streaming
+requests per concurrency level:
+
+| Concurrency | Direct RPS | Gateway RPS | Direct P95 Latency | Gateway P95 Latency | Gateway P50 TTFT |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | 1.73 | 1.98 | 1043.08 ms | 896.34 ms | 39.27 ms |
+| 4 | 5.71 | 6.31 | 1256.95 ms | 1119.99 ms | 50.63 ms |
+| 8 | 9.45 | 10.14 | 1474.63 ms | 1368.80 ms | 54.08 ms |
+| 16 | 13.58 | 14.19 | 2004.51 ms | 1902.34 ms | 70.16 ms |
+| 32 | 17.87 | 16.11 | 3121.88 ms | 3529.36 ms | 169.88 ms |
+
+Both direct and Gateway paths completed with zero errors. Gateway-faster rows
+should be read as local run variance and "no obvious Gateway bottleneck", not
+as proof that the Gateway accelerates vLLM.
+
+Full report:
+[docs/gateway_overhead_report.md](docs/gateway_overhead_report.md)
 
 ## Run Direct vs Gateway Benchmarks
 
@@ -207,10 +204,8 @@ uv run python benchmark/run_benchmark.py \
   --stream true
 ```
 
-Run through the Gateway:
-
-For a serving-capacity benchmark, raise the local demo quota before starting
-the Docker stack:
+For Gateway serving-capacity runs, raise the demo quota before starting the
+Docker stack:
 
 ```powershell
 $env:RATE_LIMIT_RPM="10000"
@@ -218,6 +213,8 @@ $env:RATE_LIMIT_TPM="2000000"
 $env:RATE_LIMIT_CONCURRENT_REQUESTS="64"
 docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build
 ```
+
+Run through the Gateway:
 
 ```bash
 uv run python benchmark/run_benchmark.py \
@@ -246,8 +243,22 @@ The `portfolio` profile runs concurrency `1, 4, 8, 16, 32` with 100 measured
 requests per level and 10 warmup requests. Supplying
 `--output-tokenizer-path` adds tokenizer-level output tokens/sec and TPOT. Use
 `--profile stress` for 1000 requests per level after the local GPU path is
-stable. See
-[docs/performance_benchmarking.md](docs/performance_benchmarking.md).
+stable.
+
+See [docs/performance_benchmarking.md](docs/performance_benchmarking.md).
+
+## Observability
+
+The local and deployment assets expose three dashboard layers:
+
+| Dashboard | What it shows |
+| --- | --- |
+| Gateway Overview | request rate, latency, errors, rejections, streaming TTFT, streaming duration |
+| vLLM Engine Overview | running requests, waiting requests, KV cache pressure, prompt/generation tokens/sec |
+| GPU Overview | DCGM GPU utilization and framebuffer memory usage |
+
+Prometheus alert examples cover elevated Gateway error rate, p95 latency,
+streaming TTFT, rejection rate, vLLM queued requests, and vLLM KV cache usage.
 
 ## Deployment Paths
 
@@ -256,10 +267,10 @@ stable. See
 | Docker Compose, no GPU | `docker-compose.yml` | Reproducible local demo |
 | Docker Compose, vLLM | `docker-compose.gpu.yml` | Local CUDA-backed serving plus DCGM GPU metrics |
 | Kubernetes base | `deploy/k8s` | Gateway, mock backend, Redis, Prometheus |
-| Kubernetes GPU overlay | `deploy/k8s-gpu` | Adds vLLM, vLLM metrics, and DCGM scraping |
-| Helm | `deploy/helm` | Parameterized deployment skeleton |
-| GitOps / Argo CD | `deploy/gitops` | Continuous sync of the Helm release |
-| Terraform IaC | `deploy/terraform` | Namespace, Secrets boundary, and Argo CD Application |
+| Kubernetes GPU overlay | `deploy/k8s-gpu` | vLLM backend, vLLM metrics, DCGM scraping |
+| Helm | `deploy/helm` | Parameterized mock or vLLM deployment |
+| GitOps / Argo CD | `deploy/gitops` | Continuous sync examples for Helm releases |
+| Terraform IaC | `deploy/terraform` | Namespace, Secret boundary, Argo CD Application entry point |
 
 Validate manifests:
 
@@ -272,7 +283,8 @@ helm template mini-llm deploy/helm --namespace mini-llm-serving
 helm template mini-llm deploy/helm \
   --namespace mini-llm-serving \
   --set vllm.enabled=true \
-  --set mockBackend.enabled=false
+  --set mockBackend.enabled=false \
+  --set dcgmExporter.enabled=true
 ```
 
 ## Repository Guide
@@ -282,13 +294,35 @@ helm template mini-llm deploy/helm \
 | `gateway/app` | FastAPI Gateway, auth, rate limiting, proxying, metrics |
 | `serving/mock_backend` | OpenAI-compatible mock backend |
 | `benchmark` | SDK smoke tests, async benchmark runner, report tools |
-| `monitoring` | Prometheus config, alert rules, and Grafana dashboards |
+| `monitoring` | Prometheus config, alert rules, Grafana dashboards |
 | `deploy/k8s` | No-GPU Kubernetes manifests |
-| `deploy/k8s-gpu` | vLLM Kubernetes overlay |
+| `deploy/k8s-gpu` | vLLM and DCGM Kubernetes overlay |
 | `deploy/helm` | Helm chart for mock and vLLM modes |
 | `deploy/gitops` | Argo CD Applications for mock and vLLM modes |
 | `deploy/terraform` | Terraform root module for GitOps cluster entry points |
 | `docs` | API, configuration, design decisions, operations, reports |
+
+## Verified State
+
+| Area | Status |
+| --- | --- |
+| No-GPU local path | Verified with mock backend and SDK smoke test |
+| GPU path | Verified locally with Docker Desktop and NVIDIA GPU |
+| CI | Python lint, tests, Helm lint, Helm template rendering |
+| Kubernetes | Base and GPU overlays render with Kustomize |
+| Helm | Mock and vLLM modes render successfully |
+| Release | `v0.1.1` published with CI, security, release, and container workflows passing |
+| External RAG app wiring | Intentionally excluded from this completion |
+
+GPU validation snapshot from May 19, 2026:
+
+| Item | Value |
+| --- | --- |
+| GPU | NVIDIA GeForce RTX 4060 Laptop GPU, 8GB VRAM |
+| vLLM image | `vllm/vllm-openai:v0.8.5.post1` |
+| Served model | `Qwen/Qwen2.5-0.5B-Instruct` |
+| Gateway alias | `qwen-small` |
+| Result | Direct vLLM and Gateway streaming benchmarks completed with zero errors |
 
 ## Documentation
 
@@ -308,10 +342,36 @@ helm template mini-llm deploy/helm \
 - [RAG integration guide](docs/rag_integration.md)
 - [Recommended GitHub repository metadata](docs/repository_metadata.md)
 
+## Suggested Repository Metadata
+
+Recommended repository name:
+
+```text
+llm-serving-gateway-vllm
+```
+
+Recommended About description:
+
+```text
+OpenAI-compatible LLM serving gateway with vLLM, FastAPI, Redis quotas, Prometheus/Grafana, GPU metrics, benchmarks, Docker, Kubernetes, Helm, GitOps, Terraform, and CI/CD.
+```
+
+Recommended topics:
+
+```text
+llm, llmops, llm-gateway, ai-gateway, model-serving, openai-compatible,
+openai-proxy, vllm, fastapi, redis, prometheus, grafana, docker,
+kubernetes, helm, argocd, terraform, gitops, benchmarking,
+ai-infrastructure
+```
+
+See [docs/repository_metadata.md](docs/repository_metadata.md) for GitHub UI
+and GitHub CLI setup notes.
+
 ## Design Boundaries
 
 This repository is production-style, not a complete enterprise inference
 platform. It does not implement multi-tenant billing, GPU cluster scheduling,
 LoRA adapter routing, incident response, organization identity integration, or
-full SLA/SLO management. Those are deliberately documented as boundaries so the
-implemented platform remains focused and reproducible.
+full SLA/SLO management. Those are documented boundaries so the implemented
+platform remains focused, verifiable, and reproducible.
