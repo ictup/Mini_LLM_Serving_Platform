@@ -11,12 +11,23 @@ A production-style FastAPI gateway for OpenAI-compatible LLM serving. It sits
 in front of mock or vLLM backends and adds the platform features that are
 normally missing when a model server is exposed directly: API key auth, request
 IDs, model aliases, Redis-backed RPM/TPM/concurrency limits, structured logs,
-Prometheus metrics, Grafana dashboards, Docker Compose, Kubernetes, Helm, and
-direct-backend vs Gateway benchmark reports.
+Prometheus metrics, Grafana dashboards, Docker Compose, Kubernetes, Helm,
+GitOps, Terraform, supply-chain checks, release automation, and direct-backend
+vs Gateway benchmark reports.
 
 This is a portfolio infrastructure project. It is intentionally scoped to show
 how an LLM serving layer is designed, operated, benchmarked, and documented,
 without claiming to be a full enterprise GPU scheduler.
+
+## Recruiter Snapshot
+
+| Signal | Evidence |
+| --- | --- |
+| AI platform engineering | OpenAI-compatible Gateway, vLLM backend, streaming SSE, model routing, token-aware quotas |
+| Production operations | Redis rate limits, readiness/warmup, structured logs, Prometheus metrics, Grafana dashboards, alert rules |
+| Performance discipline | Direct-vs-Gateway benchmark runner, TTFT/ITL/p95/p99/error-rate reporting, local GPU benchmark report |
+| Deployment maturity | Docker Compose, K8s overlays, Helm chart, Argo CD examples, Terraform entry point |
+| Delivery hygiene | CI, GHCR image publishing, Trivy/pip-audit, SBOM/provenance, Dependabot, SemVer release workflow |
 
 ## What This Demonstrates
 

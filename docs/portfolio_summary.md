@@ -5,9 +5,10 @@
 This project is a production-style OpenAI-compatible LLM serving gateway. It
 places a FastAPI platform layer in front of mock or vLLM backends and adds the
 features commonly needed around model serving: authentication, request IDs,
-model aliases, Redis-backed rate limiting, structured logging, Prometheus
-metrics, Grafana dashboards, streaming proxying, Docker Compose, Kubernetes,
-Helm, and benchmark reporting.
+model aliases, weighted routing, Redis-backed RPM/TPM/concurrency limits,
+structured logging, Prometheus metrics, Grafana dashboards, alert rules,
+streaming proxying, Docker Compose, Kubernetes, Helm, GitOps, Terraform,
+supply-chain checks, release automation, and benchmark reporting.
 
 The local no-GPU path uses a mock backend so the repository remains
 reproducible in CI and on laptops. The GPU path has been validated with
@@ -28,33 +29,53 @@ Laptop GPU.
 
 ## CV Bullets
 
-OpenAI-Compatible LLM Serving Platform with vLLM
+OpenAI-Compatible LLM Serving Platform with vLLM and Production Tooling
 
-Python, FastAPI, vLLM, Redis, Prometheus, Grafana, Docker, Kubernetes, Helm
+Python, FastAPI, vLLM, Redis, Prometheus, Grafana, Docker, Kubernetes, Helm,
+Argo CD, Terraform, GitHub Actions
 
 - Built a FastAPI gateway in front of mock and vLLM backends with
   OpenAI-compatible chat completions, streaming SSE proxying, model aliases,
-  API key auth, request IDs, structured JSON logging, and normalized errors.
-- Added Redis-backed RPM, estimated TPM, and concurrent request limiting, plus
-  request body and chat input limits for operational safety.
-- Implemented Prometheus/Grafana observability for request volume, errors,
-  rejection reasons, latency, streaming TTFT, streaming duration, and vLLM
-  engine metrics.
-- Created Docker Compose, Kubernetes, and Helm deployment paths with optional
-  ingress, HPA, external Secret references, vLLM startup probes, and a Gateway
-  warmup tool.
+  weighted backend routing, fallback, API key auth, request IDs, structured
+  JSON logging, and normalized errors.
+- Added Redis-backed RPM, model-aware TPM, and concurrent request limiting,
+  plus request body and chat input limits for operational safety.
+- Implemented Prometheus/Grafana observability and alert rules for request
+  volume, errors, rejection reasons, latency, streaming TTFT, streaming
+  duration, and vLLM engine metrics.
+- Created Docker Compose, Kubernetes, Helm, Argo CD, and Terraform deployment
+  paths with optional ingress, HPA, external Secret references, vLLM startup
+  probes, and a Gateway warmup tool.
 - Benchmarked direct vLLM vs Gateway-routed streaming inference on a local RTX
-  4060 Laptop GPU and generated a Gateway overhead report.
+  4060 Laptop GPU with p95/p99 latency, TTFT, inter-token latency, throughput,
+  error-rate, and Prometheus snapshot/time-series evidence.
+- Added CI, GHCR image publishing, Trivy and pip-audit security workflows,
+  SBOM/provenance output, Dependabot updates, SemVer release validation, and a
+  changelog-backed release process.
+
+## Interview Talking Points
+
+- Why a Gateway is still useful when vLLM already exposes an OpenAI-compatible
+  API: stable client contract, auth, quotas, observability, and operational
+  policy live outside model execution.
+- Why the mock backend exists: reproducibility, CI coverage, and platform tests
+  without CUDA or model downloads.
+- Why benchmark TTFT and p95/p99 instead of only average latency: interactive
+  chat UX and tail behavior are usually what users feel.
+- Why token-aware TPM matters: quota and cost controls are not credible if they
+  only count requests.
+- Why GitOps/Terraform/security/release workflows are included: serving
+  platforms are operated systems, not just inference scripts.
 
 ## Honest Limitations
 
 - Local GPU validation uses `Qwen/Qwen2.5-0.5B-Instruct`; larger models require
   more available GPU memory and compatible driver/container versions.
 - Kubernetes and Helm assets are deployment skeletons with practical production
-  hooks, not a full managed inference platform.
+  hooks, not a full managed inference platform or cloud cluster provisioner.
 - The project does not implement multi-tenant billing, GPU cluster scheduling,
-  LoRA adapter routing, incident response, SLA/SLO management, or enterprise
-  identity integration.
+  cross-backend GPU-aware routing, LoRA adapter routing, incident response,
+  SLA/SLO management, or enterprise identity integration.
 - External RAG application integration is intentionally excluded from this
   completion, although the Gateway exposes the OpenAI-compatible interface that
   such an app would use.

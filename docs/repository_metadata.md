@@ -17,9 +17,8 @@ OpenAI-Compatible LLM Serving Gateway
 
 ## Recommended About Description
 
-Production-style FastAPI gateway for OpenAI-compatible LLM serving with mock
-and vLLM backends, Redis rate limiting, Prometheus/Grafana observability,
-Docker, Kubernetes, Helm, and benchmark reports.
+Production-style OpenAI-compatible LLM serving gateway with vLLM, Redis quotas,
+Prometheus/Grafana, benchmarks, Docker/K8s/Helm, GitOps, Terraform, and CI/CD.
 
 ## Recommended Website Field
 
@@ -39,6 +38,11 @@ Leave blank unless you publish a hosted demo or portfolio page.
 - `docker`
 - `kubernetes`
 - `helm`
+- `argocd`
+- `terraform`
+- `gitops`
+- `sbom`
+- `supply-chain-security`
 - `benchmarking`
 - `ai-infrastructure`
 
@@ -48,6 +52,6 @@ Run these from any shell where GitHub CLI is installed and authenticated:
 
 ```bash
 gh repo rename llm-serving-gateway-vllm
-gh repo edit --description "Production-style FastAPI gateway for OpenAI-compatible LLM serving with mock and vLLM backends, Redis rate limiting, Prometheus/Grafana observability, Docker, Kubernetes, Helm, and benchmark reports."
-gh repo edit --add-topic llm,llmops,model-serving,openai-compatible,vllm,fastapi,redis,prometheus,grafana,docker,kubernetes,helm,benchmarking,ai-infrastructure
+gh repo edit --description "Production-style OpenAI-compatible LLM serving gateway with vLLM, Redis quotas, Prometheus/Grafana, benchmarks, Docker/K8s/Helm, GitOps, Terraform, and CI/CD."
+gh repo edit --add-topic llm,llmops,model-serving,openai-compatible,vllm,fastapi,redis,prometheus,grafana,docker,kubernetes,helm,argocd,terraform,gitops,sbom,supply-chain-security,benchmarking,ai-infrastructure
 ```

@@ -65,6 +65,7 @@ with more available GPU memory.
 | Persistent dashboards/storage | Implemented for local stack | Docker `grafana-data` volume, dashboard JSON workflow |
 | Local GPU benchmark report | Done | `docs/gateway_overhead_report.md` |
 | Portfolio summary and demo script | Done | `docs/portfolio_summary.md` |
+| GitHub repository presentation guide | Done | `docs/repository_metadata.md` |
 
 ## Validation Commands
 
