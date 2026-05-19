@@ -75,6 +75,12 @@ def test_gateway_k8s_config_points_to_cluster_services() -> None:
     assert 'RATE_LIMIT_TPM: "60000"' in manifest
     assert 'RATE_LIMIT_CONCURRENT_REQUESTS: "20"' in manifest
     assert 'RATE_LIMIT_DEFAULT_COMPLETION_TOKENS: "256"' in manifest
+    expected_profiles = (
+        "RATE_LIMIT_TOKENIZER_PROFILES_JSON: "
+        """'{"mock":"estimated","qwen-small":"estimated"}'"""
+    )
+    assert expected_profiles in manifest
+    assert """RATE_LIMIT_TOKENIZER_PATHS_JSON: '{}'""" in manifest
     assert 'MAX_REQUEST_BODY_BYTES: "1048576"' in manifest
     assert 'MAX_CHAT_MESSAGES: "64"' in manifest
     assert 'MAX_CHAT_MESSAGE_CHARS: "16000"' in manifest
@@ -127,6 +133,11 @@ def test_gpu_gateway_patch_switches_gateway_to_vllm() -> None:
     assert "VLLM_BASE_URL: http://vllm:8000/v1" in manifest
     assert "DEFAULT_MODEL: qwen-small" in manifest
     assert """MODEL_ALIASES_JSON: '{"qwen-small":"Qwen/Qwen2.5-0.5B-Instruct"}'""" in manifest
+    expected_profiles = (
+        "RATE_LIMIT_TOKENIZER_PROFILES_JSON: "
+        """'{"qwen-small":"qwen2","Qwen/Qwen2.5-0.5B-Instruct":"qwen2"}'"""
+    )
+    assert expected_profiles in manifest
     assert "VLLM_API_KEY: local-vllm-key" in secret
 
 

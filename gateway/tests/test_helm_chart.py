@@ -23,6 +23,8 @@ def test_helm_chart_has_expected_metadata_and_values() -> None:
     assert "tpm: 60000" in values
     assert "concurrentRequests: 20" in values
     assert "defaultCompletionTokens: 256" in values
+    assert "tokenizerProfilesJson:" in values
+    assert "tokenizerPathsJson:" in values
     assert "maxBodyBytes: 1048576" in values
     assert "maxChatMessages: 64" in values
     assert "maxChatMessageChars: 16000" in values
@@ -56,6 +58,9 @@ def test_helm_gateway_template_preserves_health_and_ready_probes() -> None:
     assert "RATE_LIMIT_TPM:" in config
     assert "RATE_LIMIT_CONCURRENT_REQUESTS:" in config
     assert "RATE_LIMIT_DEFAULT_COMPLETION_TOKENS:" in config
+    assert "RATE_LIMIT_TOKENIZER_PROFILES_JSON:" in config
+    assert "RATE_LIMIT_TOKENIZER_PATHS_JSON:" in config
+    assert 'printf "{\\"qwen-small\\":\\"qwen2\\",\\"%s\\":\\"qwen2\\"}"' in config
     assert "MAX_REQUEST_BODY_BYTES:" in config
     assert "MAX_CHAT_MESSAGES:" in config
     assert "MAX_CHAT_MESSAGE_CHARS:" in config

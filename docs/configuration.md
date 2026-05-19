@@ -27,9 +27,11 @@ Helm deployments.
 | `API_KEYS` | Yes | `dev-key,team-a-key` | Comma-separated client Bearer tokens accepted by the Gateway. |
 | `RATE_LIMIT_ENABLED` | No | `false` in code, enabled in deploy files | Enables Redis-backed per-key RPM, TPM, and concurrent request limiting. |
 | `RATE_LIMIT_RPM` | No | `60` | Requests per minute allowed for each API key. |
-| `RATE_LIMIT_TPM` | No | `60000` | Estimated tokens per minute allowed for each API key. |
+| `RATE_LIMIT_TPM` | No | `60000` | Model-aware reserved tokens per minute allowed for each API key. |
 | `RATE_LIMIT_CONCURRENT_REQUESTS` | No | `20` | Simultaneous in-flight chat requests allowed for each API key. |
 | `RATE_LIMIT_DEFAULT_COMPLETION_TOKENS` | No | `256` | Output-token budget reserved when a request omits `max_tokens`. |
+| `RATE_LIMIT_TOKENIZER_PROFILES_JSON` | No | Qwen and mock defaults | JSON object mapping model aliases or backend model ids to tokenizer profiles such as `estimated` or `qwen2`. |
+| `RATE_LIMIT_TOKENIZER_PATHS_JSON` | No | `{}` | JSON object mapping model aliases or backend model ids to local Hugging Face `tokenizer.json` files when exact token counting is configured. |
 | `REDIS_URL` | When rate limiting is enabled | `redis://localhost:6379/0` | Redis connection URL used by the rate limiter. |
 | `MAX_REQUEST_BODY_BYTES` | No | `1048576` | Maximum accepted HTTP request body size. Oversized requests return `413`. |
 | `MAX_CHAT_MESSAGES` | No | `64` | Maximum number of messages in one chat completion request. |
@@ -85,6 +87,23 @@ MODEL_ALIASES_JSON={"qwen-small":"Qwen/Qwen2.5-0.5B-Instruct"}
 ```
 
 This keeps client code stable while allowing the served backend model to change.
+
+## Token Accounting
+
+TPM limiting reserves prompt tokens plus the requested completion budget. The
+Gateway resolves model aliases before rate limiting, so token accounting can use
+either the client-facing alias or the backend model id.
+
+By default, mock models use the conservative character/word estimate and Qwen
+aliases use the `qwen2` profile. For exact local counting, provide a
+Hugging Face `tokenizer.json` path:
+
+```env
+RATE_LIMIT_TOKENIZER_PATHS_JSON={"qwen-small":"D:\\models\\qwen-tokenizer.json"}
+```
+
+If the optional tokenizer file or tokenizer runtime is unavailable, the Gateway
+falls back to the configured profile instead of blocking requests.
 
 ## Secret Handling
 

@@ -80,7 +80,7 @@ would pass local tests but break when multiple replicas are deployed. Redis
 provides a shared counter store that works locally, in Docker Compose, and in
 Kubernetes.
 
-The current implementation enforces request-per-minute, estimated
+The current implementation enforces request-per-minute, model-aware
 token-per-minute, and concurrent in-flight request limits. Concurrent limits are
 released when non-streaming calls finish or when streaming responses finish
 iterating.
@@ -97,9 +97,9 @@ The Gateway therefore applies two layers:
 - Chat-specific message count and character limits after schema validation but
   before rate limiting and backend calls.
 
-The second layer uses character counts instead of model tokenizers so it stays
-backend-neutral. Token-per-minute limiting still provides a separate estimated
-capacity guardrail.
+The second layer uses character counts so it stays backend-neutral. The
+token-per-minute limiter is separate and can use model-aware tokenizer profiles
+or exact local tokenizer files for capacity accounting.
 
 ## Why Prometheus and Grafana?
 

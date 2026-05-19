@@ -31,31 +31,32 @@ async def create_chat_completion(
 ) -> dict | JSONResponse | StreamingResponse:
     request_id = get_request_id(raw_request)
     validate_chat_request_limits(request, settings)
+    try:
+        backend_model = resolve_model_alias(request.model, settings)
+    except ModelAliasError as exc:
+        error = ErrorResponse(
+            error=ErrorDetail(
+                message=f"model not found: {exc.model}",
+                type="invalid_request_error",
+                code="model_not_found",
+            ),
+            request_id=request_id,
+        )
+        return JSONResponse(
+            status_code=400,
+            content=error.model_dump(),
+            headers=error_code_headers("model_not_found"),
+        )
+
     rate_limit_lease = await enforce_chat_rate_limit(
         settings=settings,
         api_key=api_key,
         request=request,
+        backend_model=backend_model,
     )
     stream_owns_rate_limit_lease = False
 
     try:
-        try:
-            backend_model = resolve_model_alias(request.model, settings)
-        except ModelAliasError as exc:
-            error = ErrorResponse(
-                error=ErrorDetail(
-                    message=f"model not found: {exc.model}",
-                    type="invalid_request_error",
-                    code="model_not_found",
-                ),
-                request_id=request_id,
-            )
-            return JSONResponse(
-                status_code=400,
-                content=error.model_dump(),
-                headers=error_code_headers("model_not_found"),
-            )
-
         logger.info(
             "chat_completion_request",
             request_id=request_id,

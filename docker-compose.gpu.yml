@@ -6,6 +6,7 @@ services:
       VLLM_API_KEY: ${VLLM_API_KEY:-local-vllm-key}
       DEFAULT_MODEL: qwen-small
       MODEL_ALIASES_JSON: '{"qwen-small":"${VLLM_MODEL:-Qwen/Qwen2.5-0.5B-Instruct}"}'
+      RATE_LIMIT_TOKENIZER_PROFILES_JSON: '{"qwen-small":"qwen2","${VLLM_MODEL:-Qwen/Qwen2.5-0.5B-Instruct}":"qwen2"}'
     depends_on:
       vllm:
         condition: service_healthy

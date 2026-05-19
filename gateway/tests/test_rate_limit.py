@@ -81,14 +81,17 @@ def enable_rate_limit(
     tpm: int = 1_000,
     concurrent_requests: int = 20,
     default_completion_tokens: int = 1,
+    **settings_overrides,
 ) -> None:
-    app.dependency_overrides[get_settings] = lambda: Settings(
-        rate_limit_enabled=True,
-        rate_limit_rpm=rpm,
-        rate_limit_tpm=tpm,
-        rate_limit_concurrent_requests=concurrent_requests,
-        rate_limit_default_completion_tokens=default_completion_tokens,
-    )
+    settings_values = {
+        "rate_limit_enabled": True,
+        "rate_limit_rpm": rpm,
+        "rate_limit_tpm": tpm,
+        "rate_limit_concurrent_requests": concurrent_requests,
+        "rate_limit_default_completion_tokens": default_completion_tokens,
+    }
+    settings_values.update(settings_overrides)
+    app.dependency_overrides[get_settings] = lambda: Settings(**settings_values)
 
     def fake_create_rate_limiter(settings: Settings) -> RateLimiter:
         return RateLimiter(redis_client=fake_redis)
@@ -263,6 +266,35 @@ def test_token_rate_limit_accumulates_tokens_per_api_key(
     assert second.status_code == 200
     assert third.status_code == 429
     assert third.json()["error"]["code"] == "token_rate_limit_exceeded"
+
+
+def test_token_rate_limit_uses_backend_model_tokenizer_profile(
+    monkeypatch: pytest.MonkeyPatch,
+    fake_redis: FakeRedis,
+) -> None:
+    enable_rate_limit(
+        monkeypatch,
+        fake_redis,
+        rpm=10,
+        tpm=10,
+        default_completion_tokens=1,
+        model_aliases_json='{"qwen-small":"Qwen/Qwen2.5-0.5B-Instruct"}',
+        rate_limit_tokenizer_profiles_json='{"Qwen/Qwen2.5-0.5B-Instruct":"qwen2"}',
+    )
+
+    response = client.post(
+        "/v1/chat/completions",
+        headers=AUTH_HEADERS,
+        json={
+            "model": "qwen-small",
+            "messages": [{"role": "user", "content": "hello world"}],
+            "max_tokens": 1,
+            "stream": False,
+        },
+    )
+
+    assert response.status_code == 429
+    assert response.json()["error"]["code"] == "token_rate_limit_exceeded"
 
 
 def test_concurrent_request_limit_releases_after_non_streaming_request(

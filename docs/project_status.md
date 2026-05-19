@@ -26,6 +26,7 @@ with more available GPU memory.
 | API key authentication | Done | `gateway/app/core/security.py` |
 | Request IDs | Done | `gateway/app/core/request_id.py` |
 | Redis RPM, TPM, and concurrent request limiting | Done | `gateway/app/core/rate_limit.py` |
+| Model-aware token accounting | Done | `gateway/app/core/token_accounting.py` |
 | Request body and chat input limits | Done | `gateway/app/core/request_limits.py` |
 | Structured logging | Done | `gateway/app/core/logging.py` |
 | Prometheus metrics | Done | `gateway/app/observability/metrics.py` |
@@ -117,9 +118,9 @@ uv run python benchmark/client_smoke_test.py
   substitute for real model latency, tokenization, or GPU scheduling behavior.
 - vLLM has been locally verified with the 0.5B model. Larger models depend on
   available GPU memory and driver/container compatibility.
-- Rate limiting uses an estimated token count instead of a model-specific
-  tokenizer. This keeps the Gateway backend-neutral, but real token accounting
-  may differ by model.
+- Token accounting supports model-aware profiles and optional local
+  `tokenizer.json` files. Exact production parity still depends on providing
+  the same tokenizer artifact as the served model.
 - Kubernetes and Helm assets include basic ingress, TLS, HPA, external Secret,
   and vLLM startup examples. They still do not include ServiceMonitor CRDs,
   cluster-specific GPU autoscaling, organization-specific secret stores,

@@ -142,7 +142,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "vllm:kv_cache_usage_perc * 100",
+          "expr": "(vllm:kv_cache_usage_perc or vllm:gpu_cache_usage_perc) * 100",
           "legendFormat": "kv cache %",
           "range": true,
           "refId": "A"
@@ -311,7 +311,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum(rate(vllm:inter_token_latency_seconds_bucket[5m])) by (le, model_name))",
+          "expr": "histogram_quantile(0.95, (sum(rate(vllm:inter_token_latency_seconds_bucket[5m])) by (le, model_name) or sum(rate(vllm:time_per_output_token_seconds_bucket[5m])) by (le, model_name)))",
           "legendFormat": "p95 {{model_name}}",
           "range": true,
           "refId": "A"
@@ -322,7 +322,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.50, sum(rate(vllm:inter_token_latency_seconds_bucket[5m])) by (le, model_name))",
+          "expr": "histogram_quantile(0.50, (sum(rate(vllm:inter_token_latency_seconds_bucket[5m])) by (le, model_name) or sum(rate(vllm:time_per_output_token_seconds_bucket[5m])) by (le, model_name)))",
           "legendFormat": "p50 {{model_name}}",
           "range": true,
           "refId": "B"

@@ -3,6 +3,8 @@ from functools import lru_cache
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from gateway.app.core.token_accounting import DEFAULT_TOKENIZER_PROFILES_JSON
+
 
 class Settings(BaseSettings):
     app_name: str = "mini-llm-serving-platform"
@@ -14,6 +16,8 @@ class Settings(BaseSettings):
     rate_limit_tpm: int = Field(default=60_000, gt=0)
     rate_limit_concurrent_requests: int = Field(default=20, gt=0)
     rate_limit_default_completion_tokens: int = Field(default=256, gt=0)
+    rate_limit_tokenizer_profiles_json: str = DEFAULT_TOKENIZER_PROFILES_JSON
+    rate_limit_tokenizer_paths_json: str = "{}"
     redis_url: str = "redis://localhost:6379/0"
     max_request_body_bytes: int = Field(default=1_048_576, gt=0)
     max_chat_messages: int = Field(default=64, gt=0)

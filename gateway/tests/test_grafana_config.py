@@ -63,6 +63,7 @@ def test_vllm_dashboard_json_references_vllm_engine_metrics() -> None:
     assert len(dashboard["panels"]) == 6
     assert any("vllm:num_requests_running" in expression for expression in expressions)
     assert any("vllm:kv_cache_usage_perc" in expression for expression in expressions)
+    assert any("vllm:gpu_cache_usage_perc" in expression for expression in expressions)
     assert any(
         "vllm:time_to_first_token_seconds_bucket" in expression
         for expression in expressions
@@ -73,6 +74,10 @@ def test_vllm_dashboard_json_references_vllm_engine_metrics() -> None:
     )
     assert any(
         "vllm:inter_token_latency_seconds_bucket" in expression
+        for expression in expressions
+    )
+    assert any(
+        "vllm:time_per_output_token_seconds_bucket" in expression
         for expression in expressions
     )
     assert any("vllm:generation_tokens_total" in expression for expression in expressions)

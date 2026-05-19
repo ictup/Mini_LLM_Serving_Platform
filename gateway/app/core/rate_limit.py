@@ -1,5 +1,4 @@
 import hashlib
-import math
 import time
 from collections.abc import AsyncIterator
 from typing import Annotated, Protocol
@@ -12,6 +11,8 @@ from gateway.app.core.config import Settings, get_settings
 from gateway.app.core.error_codes import error_code_headers
 from gateway.app.core.request_id import get_request_id
 from gateway.app.core.security import require_api_key
+from gateway.app.core.token_accounting import estimate_chat_token_cost
+from gateway.app.core.token_accounting import estimate_text_tokens as _estimate_text_tokens
 from gateway.app.schemas.openai import ChatCompletionRequest, ErrorDetail, ErrorResponse
 
 RATE_LIMIT_WINDOW_SECONDS = 60
@@ -19,9 +20,6 @@ RATE_LIMIT_RPM_KEY_PREFIX = "rate_limit:rpm"
 RATE_LIMIT_TPM_KEY_PREFIX = "rate_limit:tpm"
 RATE_LIMIT_CONCURRENT_KEY_PREFIX = "rate_limit:concurrent"
 RATE_LIMIT_KEY_PREFIX = RATE_LIMIT_RPM_KEY_PREFIX
-CHAT_MESSAGE_OVERHEAD_TOKENS = 4
-CHAT_REQUEST_OVERHEAD_TOKENS = 2
-TOKEN_ESTIMATE_CHARS_PER_TOKEN = 4
 CONCURRENT_REQUEST_TTL_SECONDS = 3600
 
 SettingsDependency = Annotated[Settings, Depends(get_settings)]
@@ -163,6 +161,10 @@ def create_rate_limiter(settings: Settings) -> RateLimiter:
     return RateLimiter(redis_client=create_redis_client(settings))
 
 
+def estimate_text_tokens(text: str) -> int:
+    return _estimate_text_tokens(text)
+
+
 async def enforce_rate_limit(
     settings: SettingsDependency,
     api_key: APIKeyDependency,
@@ -182,6 +184,7 @@ async def enforce_chat_rate_limit(
     settings: Settings,
     api_key: str,
     request: ChatCompletionRequest,
+    backend_model: str | None = None,
 ) -> RateLimitLease:
     if not settings.rate_limit_enabled:
         return RateLimitLease.noop()
@@ -189,6 +192,9 @@ async def enforce_chat_rate_limit(
     token_cost = estimate_chat_token_cost(
         request,
         default_completion_tokens=settings.rate_limit_default_completion_tokens,
+        tokenizer_profiles_json=settings.rate_limit_tokenizer_profiles_json,
+        tokenizer_paths_json=settings.rate_limit_tokenizer_paths_json,
+        backend_model=backend_model,
     )
     limiter = create_rate_limiter(settings)
     lease: RateLimitLease | None = None
@@ -210,30 +216,6 @@ async def enforce_chat_rate_limit(
         else:
             await limiter.aclose()
         raise
-
-
-def estimate_chat_token_cost(
-    request: ChatCompletionRequest,
-    *,
-    default_completion_tokens: int,
-) -> int:
-    prompt_tokens = CHAT_REQUEST_OVERHEAD_TOKENS
-    for message in request.messages:
-        prompt_tokens += CHAT_MESSAGE_OVERHEAD_TOKENS
-        prompt_tokens += estimate_text_tokens(message.content)
-
-    completion_budget = request.max_tokens or default_completion_tokens
-    return prompt_tokens + completion_budget
-
-
-def estimate_text_tokens(text: str) -> int:
-    stripped = text.strip()
-    if not stripped:
-        return 0
-
-    word_estimate = len(stripped.split())
-    char_estimate = math.ceil(len(stripped) / TOKEN_ESTIMATE_CHARS_PER_TOKEN)
-    return max(word_estimate, char_estimate, 1)
 
 
 async def rate_limit_exception_handler(

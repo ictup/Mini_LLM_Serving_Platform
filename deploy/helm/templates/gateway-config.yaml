@@ -14,6 +14,12 @@ data:
   RATE_LIMIT_TPM: {{ .Values.gateway.rateLimit.tpm | quote }}
   RATE_LIMIT_CONCURRENT_REQUESTS: {{ .Values.gateway.rateLimit.concurrentRequests | quote }}
   RATE_LIMIT_DEFAULT_COMPLETION_TOKENS: {{ .Values.gateway.rateLimit.defaultCompletionTokens | quote }}
+  {{- if .Values.vllm.enabled }}
+  RATE_LIMIT_TOKENIZER_PROFILES_JSON: {{ printf "{\"qwen-small\":\"qwen2\",\"%s\":\"qwen2\"}" .Values.vllm.model | quote }}
+  {{- else }}
+  RATE_LIMIT_TOKENIZER_PROFILES_JSON: {{ .Values.gateway.rateLimit.tokenizerProfilesJson | quote }}
+  {{- end }}
+  RATE_LIMIT_TOKENIZER_PATHS_JSON: {{ .Values.gateway.rateLimit.tokenizerPathsJson | quote }}
   REDIS_URL: redis://redis:{{ .Values.redis.service.port }}/0
   MAX_REQUEST_BODY_BYTES: {{ .Values.gateway.requestLimits.maxBodyBytes | int | quote }}
   MAX_CHAT_MESSAGES: {{ .Values.gateway.requestLimits.maxChatMessages | int | quote }}
