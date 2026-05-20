@@ -40,5 +40,5 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_TAG }}
-          name: Mini LLM Serving Platform ${{ env.RELEASE_TAG }}
+          name: LLM Serving Gateway for vLLM ${{ env.RELEASE_TAG }}
           generate_release_notes: true
