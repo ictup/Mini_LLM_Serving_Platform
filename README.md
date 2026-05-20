@@ -346,37 +346,3 @@ GPU validation snapshot from May 19, 2026:
 ## License
 
 This project is released under the [MIT License](LICENSE).
-
-## Suggested Repository Metadata
-
-Recommended repository name:
-
-```text
-llm-serving-gateway-vllm
-```
-
-Recommended About description:
-
-```text
-OpenAI-compatible LLM serving gateway with vLLM, FastAPI, Redis quotas, Prometheus/Grafana, GPU metrics, benchmarks, Docker, Kubernetes, Helm, GitOps, Terraform, and CI/CD.
-```
-
-Recommended topics:
-
-```text
-llm, llmops, llm-gateway, ai-gateway, model-serving, openai-compatible,
-openai-proxy, vllm, fastapi, redis, prometheus, grafana, docker,
-kubernetes, helm, argocd, terraform, gitops, benchmarking,
-ai-infrastructure
-```
-
-See [docs/repository_metadata.md](docs/repository_metadata.md) for GitHub UI
-and GitHub CLI setup notes.
-
-## Design Boundaries
-
-This repository is production-style, not a complete enterprise inference
-platform. It does not implement multi-tenant billing, GPU cluster scheduling,
-LoRA adapter routing, incident response, organization identity integration, or
-full SLA/SLO management. Those are documented boundaries so the implemented
-platform remains focused, verifiable, and reproducible.
