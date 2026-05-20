@@ -26,7 +26,7 @@ Helm deployments.
 | `APP_NAME` | No | `mini-llm-serving-platform` | Service name used in logs and metrics labels. |
 | `ENV` | No | `local` | Environment label such as `local`, `docker`, or `k8s`. |
 | `LOG_LEVEL` | No | `INFO` | Gateway log level. |
-| `API_KEYS` | Yes | `dev-key,team-a-key` | Comma-separated client Bearer tokens accepted by the Gateway. |
+| `API_KEYS` | Yes | `dev-key,team-a-key` in local code; `replace-me-*` in deploy templates | Comma-separated client Bearer tokens accepted by the Gateway. |
 | `RATE_LIMIT_ENABLED` | No | `false` in code, enabled in deploy files | Enables Redis-backed per-key RPM, TPM, and concurrent request limiting. |
 | `RATE_LIMIT_RPM` | No | `60` | Requests per minute allowed for each API key. |
 | `RATE_LIMIT_TPM` | No | `60000` | Model-aware reserved tokens per minute allowed for each API key. |
@@ -42,7 +42,7 @@ Helm deployments.
 | `BACKEND_TYPE` | No | `mock` | Selects `mock` or `vllm` backend routing. |
 | `MOCK_BASE_URL` | In mock mode | `http://localhost:9000/v1` | OpenAI-compatible mock backend base URL. |
 | `VLLM_BASE_URL` | In vLLM mode | `http://localhost:8000/v1` | OpenAI-compatible vLLM backend base URL. |
-| `VLLM_API_KEY` | In vLLM mode | empty in code, `local-vllm-key` in examples | Bearer token used from Gateway to vLLM. |
+| `VLLM_API_KEY` | In vLLM mode | empty in code, `local-vllm-key` in Docker, `replace-me-vllm-key` in K8s/Helm templates | Bearer token used from Gateway to vLLM. |
 | `BACKEND_TIMEOUT_SECONDS` | No | `120` | Timeout for non-streaming upstream calls. |
 | `STREAMING_TIMEOUT_SECONDS` | No | `300` | Timeout budget for streaming upstream calls. |
 | `DEFAULT_MODEL` | No | `mock` | Model used when a client request omits `model`. |
@@ -64,7 +64,7 @@ These values configure the vLLM server itself. They are consumed by
 | `VLLM_GPU_MEMORY_UTILIZATION` | No | `0.75` | Fraction of GPU memory vLLM can target. |
 | `VLLM_SWAP_SPACE` | No | `1` | vLLM CPU swap space in GiB. |
 | `VLLM_USE_V1` | No | `0` | vLLM engine switch. `0` uses the v0 engine for local Docker compatibility. |
-| `VLLM_API_KEY` | Yes | `local-vllm-key` | API key enforced by vLLM and used by the Gateway. |
+| `VLLM_API_KEY` | Yes | `local-vllm-key` in Docker, `replace-me-vllm-key` in K8s/Helm templates | API key enforced by vLLM and used by the Gateway. |
 | `HUGGING_FACE_HUB_TOKEN` | For gated models | empty | Token required to download gated Hugging Face models. |
 | `DCGM_EXPORTER_IMAGE` | No | `nvcr.io/nvidia/k8s/dcgm-exporter:3.3.9-3.6.1-ubuntu22.04` | DCGM exporter image used by the GPU Compose stack. |
 

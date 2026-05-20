@@ -48,9 +48,9 @@ helm upgrade --install mini-llm deploy/helm \
 
 ## Secret Management
 
-Example manifests still contain local placeholder values. For shared
-environments, create Secrets outside the release and tell Helm to reference
-them:
+Example manifests use obvious placeholder values such as
+`replace-me-client-key` and `replace-me-vllm-key`. For shared environments,
+create Secrets outside the release and tell Helm to reference them:
 
 ```bash
 kubectl -n mini-llm-serving create secret generic gateway-secret \
