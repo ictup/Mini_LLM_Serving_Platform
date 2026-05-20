@@ -40,7 +40,8 @@ def test_release_workflow_creates_github_release_for_semver_tags() -> None:
     assert "python scripts/check_release_version.py --tag" in workflow
     assert "softprops/action-gh-release@v2" in workflow
     assert "generate_release_notes: true" in workflow
-    assert "Mini LLM Serving Platform" in workflow
+    assert "LLM Serving Gateway for vLLM" in workflow
+    assert "Mini LLM Serving Platform" not in workflow
 
 
 def test_container_workflow_publishes_versioned_image_tags() -> None:
