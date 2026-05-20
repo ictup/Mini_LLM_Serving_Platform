@@ -4,6 +4,7 @@
 [![Security](https://github.com/ictup/llm-serving-gateway-vllm/actions/workflows/security.yml/badge.svg)](https://github.com/ictup/llm-serving-gateway-vllm/actions/workflows/security.yml)
 [![Release](https://github.com/ictup/llm-serving-gateway-vllm/actions/workflows/release.yml/badge.svg)](https://github.com/ictup/llm-serving-gateway-vllm/actions/workflows/release.yml)
 [![Latest Release](https://img.shields.io/github/v/release/ictup/llm-serving-gateway-vllm?sort=semver)](https://github.com/ictup/llm-serving-gateway-vllm/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](pyproject.toml)
 [![FastAPI](https://img.shields.io/badge/FastAPI-OpenAI--compatible-009688?logo=fastapi&logoColor=white)](gateway/app/main.py)
 [![vLLM](https://img.shields.io/badge/vLLM-GPU%20serving-6A5ACD)](docker-compose.gpu.yml)
@@ -341,6 +342,10 @@ GPU validation snapshot from May 19, 2026:
 - [Portfolio summary](docs/portfolio_summary.md)
 - [RAG integration guide](docs/rag_integration.md)
 - [Recommended GitHub repository metadata](docs/repository_metadata.md)
+
+## License
+
+This project is released under the [MIT License](LICENSE).
 
 ## Suggested Repository Metadata
 
