@@ -1,14 +1,14 @@
 # OpenAI-Compatible LLM Serving Gateway
 
-[![CI](https://github.com/ictup/Mini_LLM_Serving_Platform/actions/workflows/ci.yml/badge.svg)](https://github.com/ictup/Mini_LLM_Serving_Platform/actions/workflows/ci.yml)
-[![Security](https://github.com/ictup/Mini_LLM_Serving_Platform/actions/workflows/security.yml/badge.svg)](https://github.com/ictup/Mini_LLM_Serving_Platform/actions/workflows/security.yml)
-[![Release](https://github.com/ictup/Mini_LLM_Serving_Platform/actions/workflows/release.yml/badge.svg)](https://github.com/ictup/Mini_LLM_Serving_Platform/actions/workflows/release.yml)
-[![Latest Release](https://img.shields.io/github/v/release/ictup/Mini_LLM_Serving_Platform?sort=semver)](https://github.com/ictup/Mini_LLM_Serving_Platform/releases)
-![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-OpenAI--compatible-009688?logo=fastapi&logoColor=white)
-![vLLM](https://img.shields.io/badge/vLLM-GPU%20serving-6A5ACD)
-![Kubernetes](https://img.shields.io/badge/Kubernetes%20%2B%20Helm-ready-326CE5?logo=kubernetes&logoColor=white)
-![Observability](https://img.shields.io/badge/Observability-Prometheus%20%2B%20Grafana-orange)
+[![CI](https://github.com/ictup/llm-serving-gateway-vllm/actions/workflows/ci.yml/badge.svg)](https://github.com/ictup/llm-serving-gateway-vllm/actions/workflows/ci.yml)
+[![Security](https://github.com/ictup/llm-serving-gateway-vllm/actions/workflows/security.yml/badge.svg)](https://github.com/ictup/llm-serving-gateway-vllm/actions/workflows/security.yml)
+[![Release](https://github.com/ictup/llm-serving-gateway-vllm/actions/workflows/release.yml/badge.svg)](https://github.com/ictup/llm-serving-gateway-vllm/actions/workflows/release.yml)
+[![Latest Release](https://img.shields.io/github/v/release/ictup/llm-serving-gateway-vllm?sort=semver)](https://github.com/ictup/llm-serving-gateway-vllm/releases)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](pyproject.toml)
+[![FastAPI](https://img.shields.io/badge/FastAPI-OpenAI--compatible-009688?logo=fastapi&logoColor=white)](gateway/app/main.py)
+[![vLLM](https://img.shields.io/badge/vLLM-GPU%20serving-6A5ACD)](docker-compose.gpu.yml)
+[![Kubernetes + Helm](https://img.shields.io/badge/Kubernetes%20%2B%20Helm-ready-326CE5?logo=kubernetes&logoColor=white)](deploy/helm)
+[![Observability](https://img.shields.io/badge/Observability-Prometheus%20%2B%20Grafana-orange)](monitoring)
 
 Production-style FastAPI gateway for OpenAI-compatible LLM serving. It sits in
 front of mock or vLLM backends and adds the platform layer that a raw model
