@@ -1,6 +1,6 @@
 [project]
 name = "mini-llm-serving-platform"
-version = "0.1.1"
+version = "0.1.2"
 description = "Production-style FastAPI gateway for OpenAI-compatible LLM serving with mock and vLLM backends."
 readme = "README.md"
 license = "MIT"
