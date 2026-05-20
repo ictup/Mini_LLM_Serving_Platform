@@ -95,6 +95,18 @@ operational contract.
 
 The mock backend makes the platform reproducible on a laptop and in CI.
 
+Print the portfolio demo walkthrough:
+
+```bash
+uv run python scripts/demo_portfolio.py
+```
+
+Run the no-GPU live demo:
+
+```bash
+uv run python scripts/demo_portfolio.py --execute-local
+```
+
 ```bash
 uv sync --frozen --all-groups
 uv run python scripts/local_e2e.py
@@ -335,6 +347,7 @@ GPU validation snapshot from May 19, 2026:
 - [GitOps deployment guide](docs/gitops_deployment.md)
 - [Terraform IaC guide](deploy/terraform/README.md)
 - [Security and supply chain](docs/security.md)
+- [Portfolio demo playbook](docs/demo.md)
 - [Release process](docs/release_process.md)
 - [Gateway overhead report](docs/gateway_overhead_report.md)
 - [Performance benchmarking guide](docs/performance_benchmarking.md)
