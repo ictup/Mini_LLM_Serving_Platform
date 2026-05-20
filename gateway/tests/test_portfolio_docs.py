@@ -5,6 +5,7 @@ README_PATH = ROOT / "README.md"
 PORTFOLIO_PATH = ROOT / "docs/portfolio_summary.md"
 REPOSITORY_METADATA_PATH = ROOT / "docs/repository_metadata.md"
 PROJECT_STATUS_PATH = ROOT / "docs/project_status.md"
+DEMO_PATH = ROOT / "docs/demo.md"
 
 
 def test_readme_has_recruiter_snapshot_and_portfolio_signals() -> None:
@@ -52,3 +53,15 @@ def test_project_status_tracks_repository_presentation() -> None:
     )
 
     assert expected_row in status
+
+
+def test_demo_playbook_covers_stack_and_storyline() -> None:
+    demo = DEMO_PATH.read_text(encoding="utf-8")
+
+    assert "Portfolio Demo Playbook" in demo
+    assert "scripts/demo_portfolio.py" in demo
+    assert "OpenAI-compatible" in demo
+    assert "FastAPI Gateway" in demo
+    assert "vLLM" in demo
+    assert "Prometheus/Grafana" in demo
+    assert "Kubernetes, Helm, GitOps, Terraform" in demo
