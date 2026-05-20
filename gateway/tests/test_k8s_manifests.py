@@ -147,7 +147,7 @@ def test_gpu_gateway_patch_switches_gateway_to_vllm() -> None:
         """'{"qwen-small":"qwen2","Qwen/Qwen2.5-0.5B-Instruct":"qwen2"}'"""
     )
     assert expected_profiles in manifest
-    assert "VLLM_API_KEY: local-vllm-key" in secret
+    assert "VLLM_API_KEY: replace-me-vllm-key" in secret
 
 
 def test_vllm_k8s_manifest_requests_gpu_and_exposes_service() -> None:

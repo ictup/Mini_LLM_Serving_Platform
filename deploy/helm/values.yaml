@@ -6,7 +6,7 @@ gateway:
   replicas: 1
   image: mini-llm-serving-platform:local
   imagePullPolicy: IfNotPresent
-  apiKeys: dev-key,team-a-key
+  apiKeys: replace-me-client-key,replace-me-team-key
   existingSecretName: ""
   logLevel: INFO
   rateLimit:
@@ -91,7 +91,7 @@ vllm:
   enabled: false
   image: vllm/vllm-openai:v0.8.5.post1
   model: Qwen/Qwen2.5-0.5B-Instruct
-  apiKey: local-vllm-key
+  apiKey: replace-me-vllm-key
   existingSecretName: ""
   dtype: float16
   maxModelLen: 4096

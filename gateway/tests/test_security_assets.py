@@ -7,6 +7,10 @@ DEPENDABOT_PATH = ROOT / ".github/dependabot.yml"
 GITHUB_SECURITY_POLICY_PATH = ROOT / ".github/SECURITY.md"
 LICENSE_PATH = ROOT / "LICENSE"
 SECURITY_DOC_PATH = ROOT / "docs/security.md"
+HELM_VALUES_PATH = ROOT / "deploy/helm/values.yaml"
+K8S_GATEWAY_SECRET_PATH = ROOT / "deploy/k8s/gateway-secret.yaml"
+K8S_GPU_GATEWAY_SECRET_PATCH_PATH = ROOT / "deploy/k8s-gpu/gateway-secret-patch.yaml"
+K8S_GPU_VLLM_SECRET_PATH = ROOT / "deploy/k8s-gpu/vllm-secret.yaml"
 
 
 def test_security_workflow_runs_dependency_audit_and_trivy_scans() -> None:
@@ -78,3 +82,19 @@ def test_repository_declares_license_and_security_policy() -> None:
     assert "Copyright (c) 2026 ictup" in license_text
     assert "Security Policy" in security_policy
     assert "Reporting a Vulnerability" in security_policy
+
+
+def test_deployment_secret_examples_use_obvious_placeholders() -> None:
+    deploy_secret_text = "\n".join(
+        [
+            HELM_VALUES_PATH.read_text(encoding="utf-8"),
+            K8S_GATEWAY_SECRET_PATH.read_text(encoding="utf-8"),
+            K8S_GPU_GATEWAY_SECRET_PATCH_PATH.read_text(encoding="utf-8"),
+            K8S_GPU_VLLM_SECRET_PATH.read_text(encoding="utf-8"),
+        ]
+    )
+
+    assert "replace-me-client-key" in deploy_secret_text
+    assert "replace-me-vllm-key" in deploy_secret_text
+    assert "dev-key,team-a-key" not in deploy_secret_text
+    assert "local-vllm-key" not in deploy_secret_text
