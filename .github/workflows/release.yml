@@ -37,7 +37,7 @@ jobs:
         run: python scripts/check_release_version.py --tag "$RELEASE_TAG"
 
       - name: Create GitHub release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           name: LLM Serving Gateway for vLLM ${{ env.RELEASE_TAG }}
